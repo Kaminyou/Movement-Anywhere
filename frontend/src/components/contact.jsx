@@ -146,7 +146,7 @@ export const Contact = (props) => {
       <div id="footer">
         <div className="container text-center">
           <p>
-            &copy; 2023 PathoOpenGait. Design by{" "}
+            &copy; 2024 Gait Anywhere. Design by{" "}
             <a href="https://kaminyou.com/" rel="nofollow">
               Ming-Yang Ho
             </a>
