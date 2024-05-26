@@ -1,10 +1,7 @@
 ![version](https://img.shields.io/badge/version-0.2.1-red)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Kaminyou/PathoOpenGait/blob/main/LICENSE)
-![linting workflow](https://github.com/Kaminyou/PathoOpenGait/actions/workflows/main.yml/badge.svg)
-# PathoOpenGait
-#### PathoOpenGait: Pathological Gait Analysis With an Open-Source Cloud-Enabled Platform Empowered by Semi-Supervised Learning
-For the details, please refer to [our papar](https://ieeexplore.ieee.org/document/10349936/) published in *IEEE journal of biomedical and health informatics*.
-![image](./misc/pathoopengait-teaser.png)
+![linting workflow](https://github.com/Kaminyou/Gait-Anywhere/actions/workflows/main.yml/badge.svg)
+# Gait-Anywhere
 
 ## System design (Microservice architecture)
 ![image](./misc/pathoopengait-system.png)
