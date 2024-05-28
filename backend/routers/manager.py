@@ -213,21 +213,32 @@ def manager_upload_gait_csv():
         request_obj = RequestModel(**form_data)
 
         submit_uuid = request_obj.submitUUID
-
-        svo_file = request.files['svoFile']
-        txt_file = request.files['txtFile']
-
         data_root = f'data/{submit_uuid}'
         os.makedirs(data_root)
         os.makedirs(os.path.join(data_root, 'input'))
-        try:
-            svo_file.save(os.path.join(data_root, 'input', f'{trial_id}.svo'))
-        except Exception as e:
-            current_app.logger.info(f'{account} submit svo file fail due to {e}')
-        try:
-            txt_file.save(os.path.join(data_root, 'input', f'{trial_id}.txt'))
-        except Exception as e:
-            current_app.logger.info(f'{account} submit txt file fail due to {e}')
+        data_type = request_obj.dataType
+
+        if data_type == 'gait_svo_and_txt':
+            svo_file = request.files['svoFile']
+            txt_file = request.files['txtFile']
+            try:
+                svo_file.save(os.path.join(data_root, 'input', f'{trial_id}.svo'))
+            except Exception as e:
+                current_app.logger.info(f'{account} submit svo file fail due to {e}')
+            try:
+                txt_file.save(os.path.join(data_root, 'input', f'{trial_id}.txt'))
+            except Exception as e:
+                current_app.logger.info(f'{account} submit txt file fail due to {e}')
+        
+        elif data_type == 'gait_mp4':
+            mp4_file = request.files['mp4File']
+            try:
+                mp4_file.save(os.path.join(data_root, 'input', f'{trial_id}.mp4'))
+            except Exception as e:
+                current_app.logger.info(f'{account} submit mp4 file fail due to {e}')
+        else:
+            raise NotImplementedError(f'data type {data_type} is not supported')
+
         request_obj.save_to_db()
         try:
             task = inference_gait_task.delay(request_obj.submitUUID)
