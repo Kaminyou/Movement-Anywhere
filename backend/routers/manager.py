@@ -78,7 +78,9 @@ def list_researcher_subordinates():
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
         subordinate_instance = SubordinateModel.find_by_subordinate(subordinate=account)
-        subordinate_instances = SubordinateModel.find_by_account(account=subordinate_instance.account)
+        subordinate_instances = SubordinateModel.find_by_account(
+            account=subordinate_instance.account,
+        )
 
         subordinate_dicts = parse_subordinate_instances(subordinate_instances)
         for subordinate_dict in subordinate_dicts:
@@ -131,7 +133,7 @@ def create_subordinate():
             userObj.save_to_db()
             subordinateObj.save_to_db()
 
-        except Exception as e:
+        except Exception:
             userObj.delete_from_db()  # Rollback
             subordinateObj.delete_from_db()
 
@@ -264,7 +266,7 @@ def manager_request_results():
             authenticated = True
         if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
             authenticated = True
-        
+
         if not authenticated:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
@@ -335,7 +337,7 @@ def manager_request_status():
             authenticated = True
         if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
             authenticated = True
-        
+
         if not authenticated:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
@@ -479,7 +481,7 @@ def manager_get_user_profile():
             authenticated = True
         if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
             authenticated = True
-        
+
         if not authenticated:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 

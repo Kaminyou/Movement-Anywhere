@@ -373,7 +373,7 @@ def get_video():
         user_instance = UserModel.find_by_account(account=account)
         video_path = f'data/{video_uuid}/out/render.mp4'
         if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
-            video_path = f'data/{video_uuid}/out/render-black-background.mp4'         
+            video_path = f'data/{video_uuid}/out/render-black-background.mp4'
 
         if os.path.exists(video_path):
             return send_file(video_path), HTTPStatus.OK
