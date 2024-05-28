@@ -1,4 +1,12 @@
 # Changelog
+## v0.3.1
+### New features
+- Retry and timeout setting for `svo export` and `depth sensing` in `SVOGaitAnalyzer` due to unknown occasional errors
+
+### Improvements
+- Remove old gait algorithm `BasicGaitAnalyzer`
+
+
 ## v0.3.0
 ### New features
 - Add a **researcher** category
