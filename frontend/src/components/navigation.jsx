@@ -138,6 +138,24 @@ const versionStyle = {
                   </li>
                   </ul>
                 ),
+                'researcher': (
+                  <ul className="nav navbar-nav navbar-right">
+                  <li className="nav-item">
+                    <Link to={"/profile"}>Profile</Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link to={"/researcherdashboard"}>Dashboard</Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link to={"/logout"}>Logout</Link>
+                  </li>
+                  <li className="nav-item">
+                    <HashLink smooth to="/#contact" className="page-scroll">
+                      Contact
+                    </HashLink>
+                  </li>
+                  </ul>
+                ),
                 'general': (
                   <ul className="nav navbar-nav navbar-right">
                   <li className="nav-item">

@@ -14,6 +14,7 @@ import AdminPage from './containers/admin'
 import ManagePage from './containers/manage'
 import ManageDashBoardPage from './containers/manageDashboard'
 import ManageUploadPage from './containers/manageUpload'
+import ResearcherDashBoardPage from './containers/researcherDashboard'
 import VideoPage from './containers/video'
 import useToken from './components/useToken'
 
@@ -64,6 +65,9 @@ function App() {
           </Route>
           <Route exact path='/manageupload'>
             <ManageUploadPage token={token} />
+          </Route>
+          <Route exact path='/researcherdashboard'>
+            <ResearcherDashBoardPage token={token} />
           </Route>
           <Route path='/video/:id'>
             <VideoPage token={token} />
