@@ -4,6 +4,7 @@ from http import HTTPStatus
 from flask import Blueprint, current_app, jsonify, request, send_file
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from enums.user import UserCategoryEnum
 from enums.request import Status
 from inference.tasks import inference_gait_task
 from models import ProfileModel, RequestModel, ResultModel, UserModel
@@ -361,16 +362,18 @@ def get_user_profile_with_uuid():
 
 
 @user_api.route('/video', methods=['GET'])
-# @jwt_required()
+@jwt_required()
 def get_video():
     try:
-        # account = get_jwt_identity()
-        # if not UserModel.find_by_account(account=account):
-        #     return {"msg": "Wrong account or password"}, HTTPStatus.FORBIDDEN
+        account = get_jwt_identity()
+        if not UserModel.find_by_account(account=account):
+            return {"msg": "Wrong account or password"}, HTTPStatus.FORBIDDEN
 
         video_uuid = request.args.get('id')
-        # video_path = f'data/{video_uuid}/out/render.mp4'
-        video_path = f'data/{video_uuid}/out/render-black-background.mp4'  # TODO
+        user_instance = UserModel.find_by_account(account=account)
+        video_path = f'data/{video_uuid}/out/render.mp4'
+        if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
+            video_path = f'data/{video_uuid}/out/render-black-background.mp4'         
 
         if os.path.exists(video_path):
             return send_file(video_path), HTTPStatus.OK

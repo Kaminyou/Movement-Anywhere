@@ -45,7 +45,51 @@ def list_manager_subordinates():
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
         subordinate_instances = SubordinateModel.find_by_account(account=account)
-        return {"currentUsers": parse_subordinate_instances(subordinate_instances)}, HTTPStatus.OK
+        subordinate_dicts = parse_subordinate_instances(subordinate_instances)
+        for subordinate_dict in subordinate_dicts:
+            subordinate_dict.update(
+                {
+                    'category': UserModel.find_by_account(
+                        account=subordinate_dict['subordinate'],
+                    ).category.name,
+                }
+            )
+        return {"currentUsers": subordinate_dicts}, HTTPStatus.OK
+
+    except Exception as e:
+        current_app.logger.info(f'{account} trigger exception {e}')
+        return {"msg": "Internal Server Error!"}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+@manager_api.route('/researcher_listuser', methods=['GET'])
+@jwt_required()
+def list_researcher_subordinates():
+    '''
+    Enable admin to get a list of registered users.
+    '''
+    try:
+        account = get_jwt_identity()
+        user_instance = UserModel.find_by_account(account=account)
+
+        if user_instance is None:
+            return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
+
+        if user_instance.__dict__['category'] != UserCategoryEnum.researcher:
+            return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
+
+        subordinate_instance = SubordinateModel.find_by_subordinate(subordinate=account)
+        subordinate_instances = SubordinateModel.find_by_account(account=subordinate_instance.account)
+
+        subordinate_dicts = parse_subordinate_instances(subordinate_instances)
+        for subordinate_dict in subordinate_dicts:
+            subordinate_dict.update(
+                {
+                    'category': UserModel.find_by_account(
+                        account=subordinate_dict['subordinate'],
+                    ).category.name,
+                }
+            )
+        return {"currentUsers": subordinate_dicts}, HTTPStatus.OK
 
     except Exception as e:
         current_app.logger.info(f'{account} trigger exception {e}')
@@ -87,7 +131,7 @@ def create_subordinate():
             userObj.save_to_db()
             subordinateObj.save_to_db()
 
-        except Exception:
+        except Exception as e:
             userObj.delete_from_db()  # Rollback
             subordinateObj.delete_from_db()
 
@@ -215,14 +259,31 @@ def manager_request_results():
         if user_instance is None:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
-        if user_instance.__dict__['category'] != UserCategoryEnum.manager:
+        authenticated = False
+        if user_instance.__dict__['category'] == UserCategoryEnum.manager:
+            authenticated = True
+        if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
+            authenticated = True
+        
+        if not authenticated:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
         target_account = request.form['account']
-        if SubordinateModel.find_by_account_and_subordinate(
-            account=account,
-            subordinate=target_account,
-        ) is None:
+        if user_instance.__dict__['category'] == UserCategoryEnum.manager:
+            if SubordinateModel.find_by_account_and_subordinate(
+                account=account,
+                subordinate=target_account,
+            ) is None:
+                return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
+
+        elif user_instance.__dict__['category'] == UserCategoryEnum.researcher:
+            manager_account = SubordinateModel.find_by_subordinate(subordinate=account).account
+            if SubordinateModel.find_by_account_and_subordinate(
+                account=manager_account,
+                subordinate=target_account,
+            ) is None:
+                return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
+        else:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
         request_objects = RequestModel.find_by_account_and_sort_by_exp_date(account=target_account)
@@ -269,14 +330,20 @@ def manager_request_status():
         account = get_jwt_identity()
         user_instance = UserModel.find_by_account(account=account)
 
-        if user_instance is None:
-            return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
-
-        if user_instance.__dict__['category'] != UserCategoryEnum.manager:
+        authenticated = False
+        if user_instance.__dict__['category'] == UserCategoryEnum.manager:
+            authenticated = True
+        if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
+            authenticated = True
+        
+        if not authenticated:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
         request_objects = []
-        subordinate_instances = SubordinateModel.find_by_account(account=account)
+        manager_account = account
+        if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
+            manager_account = SubordinateModel.find_by_subordinate(subordinate=account).account
+        subordinate_instances = SubordinateModel.find_by_account(account=manager_account)
         for subordinate_instance in subordinate_instances:
             if subordinate_instance.__dict__['exist']:
                 target_account = subordinate_instance.__dict__['subordinate']
@@ -407,14 +474,31 @@ def manager_get_user_profile():
         if user_instance is None:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
-        if user_instance.__dict__['category'] != UserCategoryEnum.manager:
+        authenticated = False
+        if user_instance.__dict__['category'] == UserCategoryEnum.manager:
+            authenticated = True
+        if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
+            authenticated = True
+        
+        if not authenticated:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
         target_account = request.form['account']
-        if SubordinateModel.find_by_account_and_subordinate(
-            account=account,
-            subordinate=target_account,
-        ) is None:
+        if user_instance.__dict__['category'] == UserCategoryEnum.manager:
+            if SubordinateModel.find_by_account_and_subordinate(
+                account=account,
+                subordinate=target_account,
+            ) is None:
+                return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
+
+        elif user_instance.__dict__['category'] == UserCategoryEnum.researcher:
+            manager_account = SubordinateModel.find_by_subordinate(subordinate=account).account
+            if SubordinateModel.find_by_account_and_subordinate(
+                account=manager_account,
+                subordinate=target_account,
+            ) is None:
+                return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
+        else:
             return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
         profile_object = ProfileModel.find_latest_by_account(account=target_account)
