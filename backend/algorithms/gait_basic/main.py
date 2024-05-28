@@ -18,6 +18,8 @@ from .utils.track import (
 MOUNT = os.environ['MOUNT']
 WORK_DIR = '/root/backend'
 START_LINE = 1820
+SVO_EXPORT_RETRY = 2
+DEPTH_SENSING_RETRY = 5
 
 
 def avg(left_value, right_value, left_num, right_num):
@@ -269,17 +271,23 @@ class SVOGaitAnalyzer(Analyzer):
             print('add a new line to txt')
 
         # convert to avi
-        run_container(
-            image='zed-env:latest',
-            command=f'python3 /root/svo_export.py "{source_svo_path}" "{meta_avi_path}" 0',
-            volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
-            },
-            working_dir=WORK_DIR,
-            device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
-            ],
-        )
+        retry = 0
+        success = False
+        while (retry < SVO_EXPORT_RETRY) and (not success):
+            print(f'retry svo export time: {retry}')
+            run_container(
+                image='zed-env:latest',
+                command=f'timeout 600 python3 /root/svo_export.py "{source_svo_path}" "{meta_avi_path}" 0',
+                volumes={
+                    MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                },
+                working_dir=WORK_DIR,
+                device_requests=[
+                    docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                ],
+            )
+            retry += 1
+            success = os.path.exists(meta_avi_path)
 
         # avi to mp4 (rotate 90 clockwisely)
         run_container(
@@ -387,20 +395,26 @@ class SVOGaitAnalyzer(Analyzer):
         fix_timestamp_file(timestamp_file_path=source_txt_path, json_path=meta_json_path)
 
         # get xyz
-        run_container(
-            image='zed-env:latest',
-            command=(
-                f'/root/depth-sensing/cpp/build/ZED_Depth_Sensing '
-                f'{meta_json_path} {source_txt_path} {source_svo_path} {meta_csv_path}'
-            ),
-            volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
-            },
-            working_dir=WORK_DIR,
-            device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
-            ],
-        )
+        retry = 0
+        success = False
+        while (retry < DEPTH_SENSING_RETRY) and (not success):
+            print(f'retry depth sensing time: {retry}')
+            run_container(
+                image='zed-env:latest',
+                command=(
+                    f'timeout 120 /root/depth-sensing/cpp/build/ZED_Depth_Sensing '
+                    f'{meta_json_path} {source_txt_path} {source_svo_path} {meta_csv_path}'
+                ),
+                volumes={
+                    MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                },
+                working_dir=WORK_DIR,
+                device_requests=[
+                    docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                ],
+            )
+            retry += 1
+            success = os.path.exists(meta_csv_path)
 
         # old pipeline
         shutil.copyfile(meta_mp4_path, source_mp4_path)
