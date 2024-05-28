@@ -426,3 +426,63 @@ class SVOGaitAnalyzer(Analyzer):
                 'type': 'float',
             },
         ]
+
+
+class Video2DGaitAnalyzer(Analyzer):
+    def __init__(
+        self,
+        pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/epoch_94.pth',
+    ):
+        self.pretrained_path = pretrained_path
+
+    def run(
+        self,
+        data_root_dir,  # ='/home/kaminyou/repos/PathoOpenGait/backend/data/test_data/'
+        file_id,  # '2021-04-01-1-4'
+    ) -> t.List[t.Dict[str, t.Any]]:
+
+        sl = 100
+        sw = 100
+        st = 100
+        velocity = 100
+        cadence = 100
+        tt = 100
+
+        return [
+            {
+                'key': 'stride length',
+                'value': sl / 10,
+                'unit': 'cm',
+                'type': 'float',
+            },
+            {
+                'key': 'stride width',
+                'value': sw / 10,
+                'unit': 'cm',
+                'type': 'float',
+            },
+            {
+                'key': 'stride time',
+                'value': st / 1000,
+                'unit': 's',
+                'type': 'float',
+            },
+            {
+                'key': 'velocity',
+                'value': velocity,
+                'unit': 'm/s',
+                'type': 'float',
+            },
+            {
+                'key': 'cadence',
+                'value': cadence,
+                'unit': '1/min',
+                'type': 'float',
+            },
+            {
+                'key': 'turn time',
+                'value': tt,
+                'unit': 's',
+                'type': 'float',
+            },
+        ]

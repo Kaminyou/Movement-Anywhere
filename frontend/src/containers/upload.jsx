@@ -11,6 +11,7 @@ function UploadPage({ token }) {
 
   const [svoFile, setSVOFile] = useState(null);
   const [txtFile, setTXTFile] = useState(null);
+  const [mp4File, setMP4File] = useState(null);
   const [loading, setLoading] = useState(false);
   const [availableDataTypes, setAvailableDataTypes] = useState([]);
   const [availableModelName, setAvailableModelName] = useState([]);
@@ -23,6 +24,7 @@ function UploadPage({ token }) {
 
   const svoFileInputRef = useRef(null);
   const txtFileInputRef = useRef(null);
+  const mp4FileInputRef = useRef(null);
 
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
@@ -49,18 +51,6 @@ function UploadPage({ token }) {
       console.error(error);
     }
   }
-
-  const fetchDataTypes = async () => {
-    try {
-      const response = await axios.get("/api/info/list/datatypes", {
-        headers: { Authorization: 'Bearer ' + token }
-      });
-      setAvailableDataTypes(response.data.datatypes);
-      setDataType(response.data.datatypes[0])
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const fetchModelNames = async () => {
     try {
@@ -98,6 +88,10 @@ function UploadPage({ token }) {
 
   const handleTXTFileChange = (e) => {
     setTXTFile(e.target.files[0]);
+  };
+
+  const handleMP4FileChange = (e) => {
+    setMP4File(e.target.files[0]);
   };
 
   const handleDataTypeChange = (e) => {
@@ -138,6 +132,7 @@ function UploadPage({ token }) {
     setTrialID('');
     setSVOFile(null);
     setTXTFile(null);
+    setMP4File(null);
     setUploadProgress(0);
     setUploadedSize(0);
     setTotalSize(0);
@@ -181,27 +176,31 @@ function UploadPage({ token }) {
       return
     }
 
-    if (svoFile === null) {
-      swal({
-        title: "Error",
-        text: "Please select a svo file to upload",
-        icon: "error",
-      });
-      return
-    }
-
-    if (txtFile === null) {
-      swal({
-        title: "Error",
-        text: "Please select a txt file (svo timestamp) to upload",
-        icon: "error",
-      });
-      return
-    }
-
     const formData = new FormData();
-    formData.append('svoFile', svoFile);
-    formData.append('txtFile', txtFile);
+    if (dataType === 'gait_svo_and_txt') {
+      if (svoFile === null || txtFile === null) {
+        swal({
+          title: "Error",
+          text: "Both SVO and TXT files are required for DataType gait_svo_and_txt",
+          icon: "error",
+        });
+        return;
+      }
+      formData.append('svoFile', svoFile);
+      formData.append('txtFile', txtFile);
+
+    } else if (dataType === 'gait_mp4') {
+      if (mp4File === null ) {
+        swal({
+          title: "Error",
+          text: "MP4 file is required for DataType gait_mp4",
+          icon: "error",
+        });
+        return;
+      }
+      formData.append('mp4File', mp4File);
+    }
+
     formData.append('dataType', dataType);
     formData.append('modelName', modelName);
     formData.append('date', date);
@@ -317,18 +316,32 @@ function UploadPage({ token }) {
                     disabled={loading}
                   />
                 )}
-                <div className="form-group">
-                  <label className="col-sm-1 control-label">SVO File</label>
-                  <div className="col-sm-10">
-                    <input type="file" className="form-control-file" accept=".svo" onChange={handleSVOFileChange} ref={svoFileInputRef} disabled={loading}/>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="col-sm-1 control-label">TXT File</label>
-                  <div className="col-sm-10">
-                    <input type="file" className="form-control-file" accept=".txt" onChange={handleTXTFileChange} ref={txtFileInputRef} disabled={loading}/>
-                  </div>
-                </div>
+                {dataType === 'gait_svo_and_txt' && (
+                  <>
+                    <div className="form-group">
+                      <label className="col-sm-1 control-label">SVO File</label>
+                      <div className="col-sm-10">
+                      <input type="file" accept=".svo" onChange={handleSVOFileChange} ref={svoFileInputRef} disabled={loading}/>
+                      </div>
+                    </div>
+                    <div className="form-group">
+                    <label className="col-sm-1 control-label">TXT File</label>
+                    <div className="col-sm-10">
+                      <input type="file" accept=".txt" onChange={handleTXTFileChange} ref={txtFileInputRef} disabled={loading}/>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {dataType === 'gait_mp4' && (
+                  <>
+                    <div className="form-group">
+                      <label className="col-sm-1 control-label">MP4 File</label>
+                      <div className="col-sm-10">
+                    <input type="file" accept="video/mp4" onChange={handleMP4FileChange} ref={mp4FileInputRef} disabled={loading}/>
+                    </div>
+                    </div>
+                  </>
+                )}
                 <div className="form-group">
                   <div className="col-sm-offset-1 col-sm-10">
                     <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '300px' }}>

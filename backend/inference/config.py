@@ -1,15 +1,20 @@
 import typing as t
 
 from algorithms._analyzer import Analyzer
-from algorithms.gait_basic.main import SVOGaitAnalyzer
+from algorithms.gait_basic.main import SVOGaitAnalyzer, Video2DGaitAnalyzer
 
 
-GAIT_PRECOMPUTED_CSV_AND_MP4_MODELS_SIMPLE = {
+GAIT_SVO_MODELS_SIMPLE = {
     'gait_svo::v1': SVOGaitAnalyzer,
 }
 
+GAIT_2D_MODELS_SIMPLE = {
+    'gait_2d::v1': Video2DGaitAnalyzer,
+}
+
 MAPPING = {
-    'gait_svo_and_txt': GAIT_PRECOMPUTED_CSV_AND_MP4_MODELS_SIMPLE,
+    'gait_svo_and_txt': GAIT_SVO_MODELS_SIMPLE,
+    'gait_mp4': GAIT_2D_MODELS_SIMPLE,
 }
 
 
