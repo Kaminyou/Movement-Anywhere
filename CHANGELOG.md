@@ -1,4 +1,15 @@
 # Changelog
+## v0.3.0
+### New features
+- Add a **researcher** category
+    - Researcher belongs to one manager
+    - Researcher cannot upload record
+    - Researcher can see records of its managers'
+    - Researcher can only see black background videos
+
+### Improvement
+- Other category (manager/general) can see the video with human and real background
+
 ## v0.2.2
 ### New features
 - To protect patient's privacy, the default video change to a black background one with full keypoints shown. The setting can be changed by modify the `get_video` api in `backend/routers/user.py`
