@@ -19,12 +19,11 @@ def inference_gait(
         analyzer = data_and_model_map_to_class(data_type=dataType, model_name=modelName)()
     except Exception:
         raise ValueError(f'dataType={dataType} and modelName={modelName} not exist')
-    # analyzer = BasicGaitAnalyzer()
+
     results = analyzer.run(
         data_root_dir=os.path.join('/root/backend/data/', submitUUID),
         file_id=trial_id,
     )
-    # print(results)
 
     for result in results:
         form_date = result_schema.load({
