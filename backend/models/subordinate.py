@@ -22,6 +22,10 @@ class SubordinateModel(db.Model):
         return cls.query.filter_by(account=account, subordinate=subordinate).first()
 
     @classmethod
+    def find_by_subordinate(cls, subordinate: str) -> 'SubordinateModel':
+        return cls.query.filter_by(subordinate=subordinate).first()
+
+    @classmethod
     def find_by_id(cls, _id: int) -> 'SubordinateModel':
         return cls.query.filter_by(id=_id).first()
 

@@ -6,3 +6,4 @@ class UserCategoryEnum(enum.Enum):
     manager = 'manager'
     general = 'general'
     guest = 'guest'
+    researcher = 'researcher'

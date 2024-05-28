@@ -75,6 +75,7 @@ export default function UserList({userlist, token}) {
         <thead>
           <tr>
             <th>Account</th>
+            <th>Category</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -82,6 +83,7 @@ export default function UserList({userlist, token}) {
           {userlist.map((user) => (
             <tr key={user.subordinate}>
               <td width="250"><b>{user.subordinate}</b></td>
+              <td width="250"><b>{user.category}</b></td>
               <td>
                 <Button bsStyle="primary" onClick={() => handleClickOpen(user.subordinate)}>
                   Change password

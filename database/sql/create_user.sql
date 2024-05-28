@@ -5,7 +5,7 @@ CREATE TABLE users (
     account varchar(80),
     password varchar(80),
     email varchar(100),
-    category ENUM ('admin', 'manager','general','guest') DEFAULT 'general',
+    category ENUM ('admin', 'manager','general','guest', 'researcher') DEFAULT 'general',
     UNIQUE (account)
 );
 INSERT INTO users (account, password, email, category) VALUES ('admin', SHA2('admin', 256), 'kaminyou@cmdm.csie.ntu.edu.tw', 'admin');

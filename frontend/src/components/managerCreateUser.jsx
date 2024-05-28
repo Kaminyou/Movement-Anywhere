@@ -79,8 +79,9 @@ export default function CreateUser({token}) {
 
       <div className="form-group">
       <label htmlFor="formWebAccountInput">Category</label>
-      <select disabled={true} className="form-control" id="formNewGroup" value={newCategory} onChange={handleNewCategoryChange}>
-          <option value="general">General</option>
+      <select className="form-control" id="formNewGroup" value={newCategory} onChange={handleNewCategoryChange}>
+        <option value="general">General</option>
+        <option value="researcher">Researcher</option>
       </select>
       </div>
 
