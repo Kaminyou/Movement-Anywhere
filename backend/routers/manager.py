@@ -229,7 +229,7 @@ def manager_upload_gait_csv():
                 txt_file.save(os.path.join(data_root, 'input', f'{trial_id}.txt'))
             except Exception as e:
                 current_app.logger.info(f'{account} submit txt file fail due to {e}')
-        
+
         elif data_type == 'gait_mp4':
             mp4_file = request.files['mp4File']
             try:

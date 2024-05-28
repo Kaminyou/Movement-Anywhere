@@ -128,14 +128,14 @@ def upload_gait_svo():
                 txt_file.save(os.path.join(data_root, 'input', f'{trial_id}.txt'))
             except Exception as e:
                 current_app.logger.info(f'{account} submit txt file fail due to {e}')
-        
+
         elif data_type == 'gait_mp4':
             mp4_file = request.files['mp4File']
             try:
                 mp4_file.save(os.path.join(data_root, 'input', f'{trial_id}.mp4'))
             except Exception as e:
                 current_app.logger.info(f'{account} submit mp4 file fail due to {e}')
-        
+
         else:
             raise NotImplementedError(f'data type {data_type} is not supported')
 
@@ -160,6 +160,7 @@ def upload_gait_svo():
             {'msg': 'Error'},
             HTTPStatus.FORBIDDEN,
         )
+
 
 @user_api.route('/request/status', methods=['GET'])
 @jwt_required()
