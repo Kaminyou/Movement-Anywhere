@@ -10,6 +10,7 @@ class RequestSchema(Schema):
     modelName = fields.Str(required=True, validate=Length(max=100))
     date = fields.Date(required=True)
     trialID = fields.Str(required=True, validate=Length(max=200))
+    height = fields.Float(default=0.0)
     description = fields.Str(required=False, validate=Length(max=200))
 
     @post_load

@@ -14,5 +14,6 @@ class Analyzer(ABC):
         self,
         data_root_dir: str,
         file_id: str,
+        height: float = None,
     ) -> t.List[t.Dict[str, t.Any]]:
         pass

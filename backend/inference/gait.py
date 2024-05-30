@@ -14,6 +14,7 @@ def inference_gait(
     submitUUID,
     session,
     trial_id,
+    height: float,
 ):
     try:
         analyzer = data_and_model_map_to_class(data_type=dataType, model_name=modelName)()
@@ -23,6 +24,7 @@ def inference_gait(
     results = analyzer.run(
         data_root_dir=os.path.join('/root/backend/data/', submitUUID),
         file_id=trial_id,
+        height=height,
     )
 
     for result in results:

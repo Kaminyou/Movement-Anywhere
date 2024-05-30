@@ -92,6 +92,7 @@ class SVOGaitAnalyzer(Analyzer):
         self,
         data_root_dir,  # ='/home/kaminyou/repos/PathoOpenGait/backend/data/test_data/'
         file_id,  # '2021-04-01-1-4'
+        **kwargs,
     ) -> t.List[t.Dict[str, t.Any]]:
 
         os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
@@ -439,12 +440,13 @@ class Video2DGaitAnalyzer(Analyzer):
         self,
         data_root_dir,  # ='/home/kaminyou/repos/PathoOpenGait/backend/data/test_data/'
         file_id,  # '2021-04-01-1-4'
+        height: float,
     ) -> t.List[t.Dict[str, t.Any]]:
 
         sl = 100
         sw = 100
         st = 100
-        velocity = 100
+        velocity = height
         cadence = 100
         tt = 100
 
