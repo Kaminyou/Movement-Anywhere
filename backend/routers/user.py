@@ -135,6 +135,10 @@ def upload_gait_svo():
                 mp4_file.save(os.path.join(data_root, 'input', f'{trial_id}.mp4'))
             except Exception as e:
                 current_app.logger.info(f'{account} submit mp4 file fail due to {e}')
+            height = request_obj.height
+            if height == 0.0:
+                current_app.logger.info('height is not provided')
+                raise ValueError('height is not provided')
 
         else:
             raise NotImplementedError(f'data type {data_type} is not supported')

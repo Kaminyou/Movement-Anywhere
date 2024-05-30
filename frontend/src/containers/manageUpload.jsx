@@ -34,6 +34,7 @@ function ManageUploadPage({ token }) {
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
   const [trialID, setTrialID] = useState('');
+  const [height, setHeight] = useState('');
 
   const [userList, setUserList] = useState([]);
   const [isManager, setIsManager] = useState(false);
@@ -149,6 +150,10 @@ function ManageUploadPage({ token }) {
     setTrialID(event.target.value);
   }
 
+  const handleHeightChange = (event) => {
+    setHeight(event.target.value);
+  }
+
   const formatBytes = (bytes, decimals = 2) => {
     if (bytes === 0) return '0 Bytes';
 
@@ -165,6 +170,7 @@ function ManageUploadPage({ token }) {
     setLoading(false);
     setDescription('');
     setTrialID('');
+    setHeight('');
     setSVOFile(null);
     setTXTFile(null);
     setMP4File(null);
@@ -181,6 +187,9 @@ function ManageUploadPage({ token }) {
     }
   };
 
+  const isNumeric = (n) => {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -244,6 +253,24 @@ function ManageUploadPage({ token }) {
         return;
       }
       formData.append('mp4File', mp4File);
+      if (height === '') {
+        swal({
+          title: "Error",
+          text: "Height should be provided",
+          icon: "error",
+        });
+        return;
+      }
+
+      if (!isNumeric(height)) {
+        swal({
+          title: "Error",
+          text: "A valid height value should be provided",
+          icon: "error",
+        });
+        return;
+      }
+      formData.append('height', height);
     }
     formData.append('dataType', dataType);
     formData.append('modelName', modelName);
@@ -411,6 +438,19 @@ function ManageUploadPage({ token }) {
                 )}
                 {dataType === 'gait_mp4' && (
                   <>
+                    <div className="form-group">
+                      <label className="col-sm-1 control-label">Height</label>
+                      <div className="col-sm-10">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Patient's height in cm (e.g., 165.5)"
+                          value={height}
+                          onChange={handleHeightChange}
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
                     <div className="form-group">
                       <label className="col-sm-1 control-label">MP4 File</label>
                       <div className="col-sm-10">
