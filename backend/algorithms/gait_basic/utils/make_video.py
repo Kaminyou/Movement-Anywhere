@@ -18,6 +18,13 @@ def get_frames(video_path: str):
     video.release()
 
 
+def count_frames(video_path: str) -> int:
+    frames = []
+    for frame in get_frames(video_path):
+        frames.append(frame)
+    return len(frames)
+
+
 def render(data_root_dir: str):
     video_path = f'{data_root_dir}/video/uploaded.mp4'
     csv_path = f'{data_root_dir}/output/uploaded_stride.csv'
@@ -99,6 +106,7 @@ def new_render(
     tt_pickle_path: str,
     output_video_path: str,
     draw_keypoint: bool = False,
+    draw_background: bool = True,
 ) -> None:
 
     with open(tt_pickle_path, 'rb') as handle:
@@ -113,7 +121,10 @@ def new_render(
 
     frames = []
     for frame in get_frames(video_path):
-        frames.append(frame)
+        if draw_background:
+            frames.append(frame)
+        else:
+            frames.append(np.zeros_like(frame))
 
     image_height, image_width, _ = frames[0].shape
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -123,15 +134,19 @@ def new_render(
     for frame_id in range(n):
         frame = frames[frame_id]
         if draw_keypoint:
+            color = (0, 0, 255)  # red
+            if not draw_background:
+                color = (255, 255, 255)
+
             for point in keypoints[frame_id]:
-                cv2.circle(frame, (int(point[0]), int(point[1])), 10, (0, 0, 255), -1)  # red color
+                cv2.circle(frame, (int(point[0]), int(point[1])), 10, color, -1)
 
             for (from_idx, to_idx) in gen_pairs([10, 8, 6, 5, 7, 9]):
                 cv2.line(
                     frame,
                     tuple(keypoints[frame_id][from_idx].astype(int)),
                     tuple(keypoints[frame_id][to_idx].astype(int)),
-                    (0, 0, 255),
+                    color,
                     5,
                 )
 
@@ -140,7 +155,7 @@ def new_render(
                     frame,
                     tuple(keypoints[frame_id][from_idx].astype(int)),
                     tuple(keypoints[frame_id][to_idx].astype(int)),
-                    (0, 0, 255),
+                    color,
                     5,
                 )
 
@@ -149,7 +164,7 @@ def new_render(
                     frame,
                     tuple(keypoints[frame_id][from_idx].astype(int)),
                     tuple(keypoints[frame_id][to_idx].astype(int)),
-                    (0, 0, 255),
+                    color,
                     5,
                 )
 
@@ -158,7 +173,7 @@ def new_render(
                     frame,
                     tuple(keypoints[frame_id][from_idx].astype(int)),
                     tuple(keypoints[frame_id][to_idx].astype(int)),
-                    (0, 0, 255),
+                    color,
                     5,
                 )
 
