@@ -8,7 +8,8 @@ import pandas as pd
 
 from .._analyzer import Analyzer
 from .gait_study_semi_turn_time.inference import simple_inference
-from .utils.make_video import new_render, render
+from .depth_alg.inference import depth_simple_inference
+from .utils.make_video import new_render, render, count_frames
 from .utils.track import (
     count_json_file, find_continuous_personal_bbox, load_mot_file,
     remove_non_target_person, run_container, set_zero_prob_for_keypoint_before_start_line,
@@ -433,39 +434,118 @@ class Video2DGaitAnalyzer(Analyzer):
     def __init__(
         self,
         pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/epoch_94.pth',
+        depth_pretrained_path: str = 'algorithms/gait_basic/depth_alg/weights/49.pth',
     ):
         self.pretrained_path = pretrained_path
+        self.depth_pretrained_path = depth_pretrained_path
 
     def run(
         self,
-        data_root_dir,  # ='/home/kaminyou/repos/PathoOpenGait/backend/data/test_data/'
-        file_id,  # '2021-04-01-1-4'
+        data_root_dir,
+        file_id,
         height: float,
     ) -> t.List[t.Dict[str, t.Any]]:
 
-        sl = 100
-        sw = 100
-        st = 100
-        velocity = height
-        cadence = 100
-        tt = 100
+        os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
+        os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
+        os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
+
+        # input
+        source_mp4_path = os.path.join(data_root_dir, 'input', f'{file_id}.mp4')
+
+        # meta output (for non-target person removing)
+        meta_mot_path = os.path.join(data_root_dir, 'out', f'{file_id}.mot.txt')
+        os.makedirs(os.path.join(data_root_dir, 'video'), exist_ok=True)
+        meta_mp4_folder = os.path.join(data_root_dir, 'video')
+        meta_mp4_path = os.path.join(data_root_dir, 'video', f'{file_id}.mp4')
+        meta_targeted_person_bboxes_path = os.path.join(data_root_dir, 'out', f'{file_id}-target_person_bboxes.pickle')
+
+        # output
+        output_2dkeypoint_folder = os.path.join(data_root_dir, 'out', '2d')
+        output_3dkeypoint_folder = os.path.join(data_root_dir, 'out', '3d')
+        output_3dkeypoint_path = os.path.join(data_root_dir, 'out', '3d', f'{file_id}.mp4.npy')
+        meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')
+        output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')
+
+        # algorithm
+        # tracking
+        run_container(
+            image='tracking-env:latest',
+            command=(
+                f'python3 /root/track.py '
+                f'--source "{source_mp4_path}" '
+                f'--yolo-model yolov8s.pt '
+                f'--classes 0 --tracking-method deepocsort '
+                f'--reid-model clip_market1501.pt '
+                f'--save-mot --save-mot-path {meta_mot_path} --device cuda:0'
+            ),
+            volumes={
+                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+            },
+            working_dir='/root',  # sync with the dry run during the building phase
+            device_requests=[
+                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+            ],
+        )
+        mot_dict = load_mot_file(meta_mot_path)
+        count = count_frames(source_mp4_path)
+        targeted_person_ids, targeted_person_bboxes = find_continuous_personal_bbox(count, mot_dict)
+
+        with open(meta_targeted_person_bboxes_path, 'wb') as handle:
+            pickle.dump(targeted_person_bboxes, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # old pipeline
+        shutil.copyfile(source_mp4_path, meta_mp4_path)
+
+        os.system(
+            'cd algorithms/gait_basic/VideoPose3D && python3 quick_run.py '
+            f'--mp4_video_folder "{meta_mp4_folder}" '
+            f'--keypoint_2D_video_folder "{output_2dkeypoint_folder}" '
+            f'--keypoint_3D_video_folder "{output_3dkeypoint_folder}" '
+            f'--targeted-person-bboxes-path "{meta_targeted_person_bboxes_path}" '
+            f'--custom-dataset-path "{meta_custom_dataset_path}"'
+        )
+
+        tt, raw_tt_prediction = simple_inference(
+            pretrained_path=self.pretrained_path,
+            path_to_npz=output_3dkeypoint_path,
+            return_raw_prediction=True,
+        )
+
+        with open(output_raw_turn_time_prediction_path, 'wb') as handle:
+            pickle.dump(raw_tt_prediction, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        final_output, gait_parameters = depth_simple_inference(
+            detectron_2d_single_person_keypoints_path=meta_custom_dataset_path,
+            rendered_3d_single_person_keypoints_path=output_3dkeypoint_path,
+            height=height,
+            depth_pretrained_path=self.depth_pretrained_path,
+            turn_time_mask_path=output_raw_turn_time_prediction_path,
+            device='cpu',
+        )
+
+        sl = final_output['sl']
+        sw = final_output['sw']
+        st = final_output['st']
+        velocity = final_output['v']
+        cadence = final_output['c']
 
         return [
             {
                 'key': 'stride length',
-                'value': sl / 10,
+                'value': sl,
                 'unit': 'cm',
                 'type': 'float',
             },
             {
                 'key': 'stride width',
-                'value': sw / 10,
+                'value': sw,
                 'unit': 'cm',
                 'type': 'float',
             },
             {
                 'key': 'stride time',
-                'value': st / 1000,
+                'value': st,
                 'unit': 's',
                 'type': 'float',
             },

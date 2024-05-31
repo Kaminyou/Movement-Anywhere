@@ -18,6 +18,13 @@ def get_frames(video_path: str):
     video.release()
 
 
+def count_frames(video_path: str) -> int:
+    frames = []
+    for frame in get_frames(video_path):
+        frames.append(frame)
+    return len(frames)
+
+
 def render(data_root_dir: str):
     video_path = f'{data_root_dir}/video/uploaded.mp4'
     csv_path = f'{data_root_dir}/output/uploaded_stride.csv'
