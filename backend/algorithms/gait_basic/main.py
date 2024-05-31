@@ -467,6 +467,9 @@ class Video2DGaitAnalyzer(Analyzer):
         meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')
         output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')
 
+        output_shown_mp4_path = os.path.join(data_root_dir, 'out', 'render.mp4')
+        output_shown_black_background_mp4_path = os.path.join(data_root_dir, 'out', 'render-black-background.mp4')
+
         # algorithm
         # tracking
         run_container(
@@ -523,6 +526,30 @@ class Video2DGaitAnalyzer(Analyzer):
             turn_time_mask_path=output_raw_turn_time_prediction_path,
             device='cpu',
         )
+
+        output_shown_mp4_path_temp = output_shown_mp4_path + '.tmp.mp4'
+        new_render(
+            video_path=source_mp4_path,
+            detectron_custom_dataset_path=meta_custom_dataset_path,
+            tt_pickle_path=output_raw_turn_time_prediction_path,
+            output_video_path=output_shown_mp4_path_temp,
+            draw_keypoint=True,
+        )
+        # browser mp4v encoding issue -> convert to h264
+        os.system(f'ffmpeg -y -i {output_shown_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_mp4_path}')  # noqa
+        os.system(f'rm {output_shown_mp4_path_temp}')
+
+        output_shown_black_background_mp4_path_temp = output_shown_black_background_mp4_path + '.tmp.mp4'
+        new_render(
+            video_path=source_mp4_path,
+            detectron_custom_dataset_path=meta_custom_dataset_path,
+            tt_pickle_path=output_raw_turn_time_prediction_path,
+            output_video_path=output_shown_black_background_mp4_path_temp,
+            draw_keypoint=True,
+            draw_background=False,
+        )
+        os.system(f'ffmpeg -y -i {output_shown_black_background_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_black_background_mp4_path}')  # noqa
+        os.system(f'rm {output_shown_black_background_mp4_path_temp}')
 
         sl = final_output['sl']
         sw = final_output['sw']
