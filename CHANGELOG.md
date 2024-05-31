@@ -1,4 +1,9 @@
 # Changelog
+## v0.4.0
+### New features
+- Support a 2D only algorithm with a mp4 video and height inputs
+
+
 ## v0.3.1
 ### New features
 - Retry and timeout setting for `svo export` and `depth sensing` in `SVOGaitAnalyzer` due to unknown occasional errors
