@@ -4,8 +4,6 @@ import os
 import typing as t
 from collections import defaultdict
 
-import docker
-
 
 VIDEO_WIDTH = 1080
 VIDEO_HEIGHT = 1920
@@ -13,10 +11,8 @@ LEFT_ANKLE = 14
 RIGHT_ANKLE = 11
 
 
-client = docker.from_env()
-
-
 def run_container(
+    client,
     image: str,
     command: str,
     working_dir: str,
