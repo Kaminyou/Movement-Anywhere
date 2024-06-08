@@ -1,3 +1,4 @@
+import math
 import os
 from http import HTTPStatus
 
@@ -231,15 +232,24 @@ def manager_upload_gait_csv():
                 current_app.logger.info(f'{account} submit txt file fail due to {e}')
 
         elif data_type == 'gait_mp4':
+
             mp4_file = request.files['mp4File']
             try:
                 mp4_file.save(os.path.join(data_root, 'input', f'{trial_id}.mp4'))
             except Exception as e:
                 current_app.logger.info(f'{account} submit mp4 file fail due to {e}')
+
             height = request_obj.height
             if height == 0.0:
                 current_app.logger.info('height is not provided')
                 raise ValueError('height is not provided')
+            
+            focal_length = request_obj.focalLength
+            if math.isclose(focal_length, -1):
+                raise ValueError('focal length is not provided')
+            
+            if focal_length <= 0:
+                raise ValueError('focal length should be > 0')
 
         else:
             raise NotImplementedError(f'data type {data_type} is not supported')
