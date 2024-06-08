@@ -1,3 +1,4 @@
+import math
 import os
 import pickle
 import shutil
@@ -6,7 +7,7 @@ import time
 import pandas as pd
 
 from .._analyzer import Analyzer
-from .gait_study_semi_turn_time.inference import simple_inference
+from .gait_study_semi_turn_time.inference import turn_time_simple_inference
 from .depth_alg.inference import depth_simple_inference
 from .utils.make_video import new_render, render, count_frames
 from .utils.track import (
@@ -92,9 +93,10 @@ def fix_timestamp_file(timestamp_file_path: str, json_path: str):
 class SVOGaitAnalyzer(Analyzer):
     def __init__(
         self,
-        pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
+        turn_time_pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
+        **kwargs,
     ):
-        self.pretrained_path = pretrained_path
+        self.turn_time_pretrained_path = turn_time_pretrained_path
 
     def run(
         self,
@@ -330,8 +332,8 @@ class SVOGaitAnalyzer(Analyzer):
             f'--custom-dataset-path "{meta_custom_dataset_path}"'
         )
 
-        tt, raw_tt_prediction = simple_inference(
-            pretrained_path=self.pretrained_path,
+        tt, raw_tt_prediction = turn_time_simple_inference(
+            turn_time_pretrained_path=self.turn_time_pretrained_path,
             path_to_npz=output_3dkeypoint_path,
             return_raw_prediction=True,
         )
@@ -447,17 +449,23 @@ class SVOGaitAnalyzer(Analyzer):
 class Video2DGaitAnalyzer(Analyzer):
     def __init__(
         self,
-        pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
+        turn_time_pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
         depth_pretrained_path: str = 'algorithms/gait_basic/depth_alg/weights/gait-depth-weight.pth',
+        model_focal_length: float = 1392.0,
+        **kwargs,
     ):
-        self.pretrained_path = pretrained_path
+        self.turn_time_pretrained_path = turn_time_pretrained_path
         self.depth_pretrained_path = depth_pretrained_path
+        if math.isclose(model_focal_length, -1):
+            raise ValueError('model focal length is not provided')
+        self.model_focal_length = model_focal_length
 
     def run(
         self,
         data_root_dir,
         file_id,
         height: float,
+        focal_length: float,
     ) -> t.List[t.Dict[str, t.Any]]:
 
         os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
@@ -524,8 +532,8 @@ class Video2DGaitAnalyzer(Analyzer):
             f'--custom-dataset-path "{meta_custom_dataset_path}"'
         )
 
-        tt, raw_tt_prediction = simple_inference(
-            pretrained_path=self.pretrained_path,
+        tt, raw_tt_prediction = turn_time_simple_inference(
+            turn_time_pretrained_path=self.turn_time_pretrained_path,
             path_to_npz=output_3dkeypoint_path,
             return_raw_prediction=True,
         )
@@ -537,6 +545,8 @@ class Video2DGaitAnalyzer(Analyzer):
             detectron_2d_single_person_keypoints_path=meta_custom_dataset_path,
             rendered_3d_single_person_keypoints_path=output_3dkeypoint_path,
             height=height,
+            model_focal_length=self.model_focal_length,
+            used_camera_focal_length=focal_length,
             depth_pretrained_path=self.depth_pretrained_path,
             turn_time_mask_path=output_raw_turn_time_prediction_path,
             device='cpu',

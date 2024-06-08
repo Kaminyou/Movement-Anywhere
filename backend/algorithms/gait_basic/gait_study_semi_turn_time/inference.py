@@ -15,8 +15,8 @@ def signal_verifier(signal):
     return np.any(np.isnan(signal))
 
 
-def simple_inference(
-    pretrained_path: str,
+def turn_time_simple_inference(
+    turn_time_pretrained_path: str,
     path_to_npz: str,
     return_raw_prediction: bool = False,
 ) -> t.Union[float, t.Tuple[float, t.List[bool]]]:
@@ -24,7 +24,7 @@ def simple_inference(
     # output the turing time in second
 
     model = SignalNet(num_of_class=2)
-    model.load_state_dict(torch.load(pretrained_path))
+    model.load_state_dict(torch.load(turn_time_pretrained_path))
 
     gait_instance = GaitTrialInstanceSimple(
         trial_id='',
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     turn_time = simple_inference(
-        pretrained_path=args.pretrained_path,
+        turn_time_pretrained_path=args.pretrained_path,
         path_to_npz=args.npz_file_path,
     )
     print(turn_time)

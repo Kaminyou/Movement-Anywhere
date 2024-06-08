@@ -3,7 +3,7 @@ from http import HTTPStatus
 from flask import Blueprint, current_app, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from inference.config import get_data_types, get_model_names
+from inference.config import get_data_types, get_model_names, get_focal_length_by_model_name
 from models import UserModel
 
 
@@ -54,5 +54,30 @@ def get_model_name_list() -> dict:
         current_app.logger.info(f'trigger exception {e}')
         return (
             {'modelnames': []},
+            HTTPStatus.OK,
+        )
+
+
+@info_api.route('/default/focallength', methods=['GET'])
+@jwt_required()
+def get_focal_length() -> dict:
+    try:
+        account = get_jwt_identity()
+        user_instance = UserModel.find_by_account(account=account)
+
+        if user_instance is None:
+            return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
+
+        model_name = request.args.get('modelname')
+
+        focal_length = get_focal_length_by_model_name(model_name)
+        return (
+            {'focalLength': focal_length},
+            HTTPStatus.OK,
+        )
+    except Exception as e:
+        current_app.logger.info(f'trigger exception {e}')
+        return (
+            {'focalLength': -1},
             HTTPStatus.OK,
         )
