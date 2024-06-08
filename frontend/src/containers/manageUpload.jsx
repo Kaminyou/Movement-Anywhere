@@ -3,7 +3,6 @@ import axios from "axios";
 import swal from "sweetalert";
 
 import UnauthorizedPage from "../components/unauthorizedPage";
-import UploadRecords from "../components/uploadRecords"
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -35,6 +34,7 @@ function ManageUploadPage({ token }) {
   const [description, setDescription] = useState('');
   const [trialID, setTrialID] = useState('');
   const [height, setHeight] = useState('');
+  const [focalLength, setFocalLength] = useState(null);
 
   const [userList, setUserList] = useState([]);
   const [isManager, setIsManager] = useState(false);
@@ -60,6 +60,16 @@ function ManageUploadPage({ token }) {
         });
         setAvailableModelName(response.data.modelnames)
         setModelName(response.data.modelnames[0])
+
+        let modelNameTemp = response.data.modelnames[0];
+        try {
+          const response = await axios.get("/api/info/default/focallength", {
+            params: { modelname: modelNameTemp }, headers: { Authorization: 'Bearer ' + token }
+          });
+          setFocalLength(response.data.focalLength)  
+        } catch (error) {
+          console.error(error);
+        }
       } catch (error) {
         console.error(error);
       }
@@ -75,10 +85,32 @@ function ManageUploadPage({ token }) {
       });
       setAvailableModelName(response.data.modelnames)
       setModelName(response.data.modelnames[0])
+
+      let modelNameTemp = response.data.modelnames[0];
+      try {
+        const response = await axios.get("/api/info/default/focallength", {
+          params: { modelname: modelNameTemp }, headers: { Authorization: 'Bearer ' + token }
+        });
+        setFocalLength(response.data.focalLength)  
+      } catch (error) {
+        console.error(error);
+      }
+
     } catch (error) {
       console.error(error);
     }
   };
+
+  const fetchFocalLength = async () => {
+    try {
+      const response = await axios.get("/api/info/focallength", {
+        params: { modelname: modelName }, headers: { Authorization: 'Bearer ' + token }
+      });
+      setFocalLength(response.data.focalLength)  
+    } catch (error) {
+      console.error(error);
+    }
+  }
   
   useEffect(() => {
     fetchModelAndData()
@@ -87,6 +119,10 @@ function ManageUploadPage({ token }) {
   useEffect(() => {
     fetchModelNames();
   }, [dataType]);
+
+  useEffect(() => {
+    fetchFocalLength();
+  }, [modelName]);
 
   const getUserList = async () => {
 
@@ -152,6 +188,10 @@ function ManageUploadPage({ token }) {
 
   const handleHeightChange = (event) => {
     setHeight(event.target.value);
+  }
+
+  const handleFocalLengthChange = (event) => {
+    setFocalLength(event.target.value);
   }
 
   const formatBytes = (bytes, decimals = 2) => {
@@ -270,7 +310,27 @@ function ManageUploadPage({ token }) {
         });
         return;
       }
+
+
+      if (focalLength === '') {
+        swal({
+          title: "Error",
+          text: "Focal length should be provided",
+          icon: "error",
+        });
+        return;
+      }
+
+      if (!isNumeric(focalLength)) {
+        swal({
+          title: "Error",
+          text: "A valid focal length value should be provided",
+          icon: "error",
+        });
+        return;
+      }
       formData.append('height', height);
+      formData.append('focalLength', focalLength);
     }
     formData.append('dataType', dataType);
     formData.append('modelName', modelName);
@@ -340,8 +400,8 @@ function ManageUploadPage({ token }) {
             <div className="about-text">
               <form onSubmit={handleSubmit} className="form-horizontal">
                 <div className="form-group">
-                  <label className="col-sm-1 control-label">User</label>
-                  <div className="col-sm-10">
+                  <label className="col-sm-2 control-label">User</label>
+                  <div className="col-sm-9">
                   <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
                     <InputLabel id="demo-simple-select-standard-label">Select user</InputLabel>
                     <Select
@@ -364,8 +424,8 @@ function ManageUploadPage({ token }) {
                   </div>
                   </div>
                   <div className="form-group">
-                  <label className="col-sm-1 control-label">Trial Date</label>
-                  <div className="col-sm-10">
+                  <label className="col-sm-2 control-label">Trial Date</label>
+                  <div className="col-sm-9">
                     <input
                       type="text"
                       className="form-control"
@@ -377,8 +437,8 @@ function ManageUploadPage({ token }) {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label className="col-sm-1 control-label">Unique Trial ID</label>
-                  <div className="col-sm-10">
+                  <label className="col-sm-2 control-label">Unique Trial ID</label>
+                  <div className="col-sm-9">
                     <input
                       type="text"
                       className="form-control"
@@ -390,8 +450,8 @@ function ManageUploadPage({ token }) {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label className="col-sm-1 control-label">Description</label>
-                  <div className="col-sm-10">
+                <label className="col-sm-2 control-label">Description</label>
+                  <div className="col-sm-9">
                     <input
                       type="text"
                       className="form-control"
@@ -403,7 +463,7 @@ function ManageUploadPage({ token }) {
                   </div>
                 </div>
                 <div className="form-group">
-                  <div className="col-sm-offset-1 col-sm-10">
+                  <div className="col-sm-offset-2 col-sm-9">
                     <button type="button" className="btn btn-secondary" onClick={handleExpand}>
                       {expanded ? 'Hide details' : 'Show details'}
                     </button>
@@ -423,14 +483,14 @@ function ManageUploadPage({ token }) {
                 {dataType === 'gait_svo_and_txt' && (
                   <>
                     <div className="form-group">
-                      <label className="col-sm-1 control-label">SVO File</label>
-                      <div className="col-sm-10">
+                      <label className="col-sm-2 control-label">SVO File</label>
+                      <div className="col-sm-9">
                       <input type="file" accept=".svo" onChange={handleSVOFileChange} ref={svoFileInputRef} disabled={loading}/>
                       </div>
                     </div>
                     <div className="form-group">
-                    <label className="col-sm-1 control-label">TXT File</label>
-                    <div className="col-sm-10">
+                    <label className="col-sm-2 control-label">TXT File</label>
+                    <div className="col-sm-9">
                       <input type="file" accept=".txt" onChange={handleTXTFileChange} ref={txtFileInputRef} disabled={loading}/>
                       </div>
                     </div>
@@ -439,8 +499,8 @@ function ManageUploadPage({ token }) {
                 {dataType === 'gait_mp4' && (
                   <>
                     <div className="form-group">
-                      <label className="col-sm-1 control-label">Height</label>
-                      <div className="col-sm-10">
+                      <label className="col-sm-2 control-label">Height</label>
+                      <div className="col-sm-9">
                         <input
                           type="text"
                           className="form-control"
@@ -452,15 +512,28 @@ function ManageUploadPage({ token }) {
                       </div>
                     </div>
                     <div className="form-group">
-                      <label className="col-sm-1 control-label">MP4 File</label>
-                      <div className="col-sm-10">
+                      <label className="col-sm-2 control-label">Camera Focal Length</label>
+                      <div className="col-sm-9">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Camera focal length in mm"
+                          value={focalLength}
+                          onChange={handleFocalLengthChange}
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="col-sm-2 control-label">MP4 File</label>
+                      <div className="col-sm-9">
                     <input type="file" accept="video/mp4" onChange={handleMP4FileChange} ref={mp4FileInputRef} disabled={loading}/>
                     </div>
                     </div>
                   </>
                 )}
                 <div className="form-group">
-                  <div className="col-sm-offset-1 col-sm-10">
+                  <div className="col-sm-offset-2 col-sm-9">
                     <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '300px' }}>
                       {loading 
                         ? `Uploading ${uploadProgress}% (${formatBytes(uploadedSize)} / ${formatBytes(totalSize)})` 

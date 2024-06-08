@@ -34,7 +34,7 @@ function ManageUploadRecords({ token }) {
 
   const TopHeader = (
     <TableRow>
-      <TableCell align="left" colSpan={3}>
+      <TableCell align="left" colSpan={4}>
         <b>Request information</b>
       </TableCell>
       <TableCell align="left" colSpan={1}>
