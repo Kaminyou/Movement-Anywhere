@@ -12,6 +12,7 @@ import ManageUploadRecords from '../components/manageUploadRecords'
 
 function ManageUploadPage({ token }) {
   const [expanded, setExpanded] = useState(false);
+  const [toggleFocalLength, setToggleFocalLength] = useState(false);
 
   const [svoFile, setSVOFile] = useState(null);
   const [txtFile, setTXTFile] = useState(null);
@@ -152,6 +153,10 @@ function ManageUploadPage({ token }) {
 
   const handleExpand = () => {
     setExpanded(!expanded);
+  };
+
+  const handleToggleFocalLength = () => {
+    setToggleFocalLength(!toggleFocalLength);
   };
 
   const handleSVOFileChange = (e) => {
@@ -474,7 +479,7 @@ function ManageUploadPage({ token }) {
                 <div className="form-group">
                   <div className="col-sm-offset-2 col-sm-9">
                     <button type="button" className="btn btn-secondary" onClick={handleExpand}>
-                      {expanded ? 'Hide details' : 'Show details'}
+                      {expanded ? 'Hide model details' : 'Show model details'}
                     </button>
                   </div>
                 </div>
@@ -521,18 +526,29 @@ function ManageUploadPage({ token }) {
                       </div>
                     </div>
                     <div className="form-group">
-                      <label className="col-sm-2 control-label">Camera Focal Length</label>
-                      <div className="col-sm-9">
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Camera focal length in mm"
-                          value={focalLength}
-                          onChange={handleFocalLengthChange}
-                          disabled={loading}
-                        />
+                      <div className="col-sm-offset-2 col-sm-9">
+                        <button type="button" className="btn btn-secondary" onClick={handleToggleFocalLength}>
+                          {toggleFocalLength ? 'Hide settings' : 'More settings'}
+                        </button>
                       </div>
                     </div>
+                    {toggleFocalLength && (
+                      <>
+                        <div className="form-group">
+                          <label className="col-sm-2 control-label">Camera Focal Length</label>
+                          <div className="col-sm-9">
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Camera focal length in mm"
+                              value={focalLength}
+                              onChange={handleFocalLengthChange}
+                              disabled={loading}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
                     <div className="form-group">
                       <label className="col-sm-2 control-label">MP4 File</label>
                       <div className="col-sm-9">
