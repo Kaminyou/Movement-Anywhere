@@ -12,20 +12,33 @@ fi
 
 rm pretrained_h36m_detectron_coco.bin
 
-wget -O epoch_94.pth https://www.dropbox.com/scl/fi/di8az1o4hgmv85uyg2hw0/epoch_94.pth?rlkey=6yxbjauub469ih2xcd82gkqia
+wget -O gait-turn-time.pth https://www.dropbox.com/scl/fi/di8az1o4hgmv85uyg2hw0/gait-turn-time.pth?rlkey=6yxbjauub469ih2xcd82gkqia
 
 EXPECTED_HASH="3878229e15542573a75948999ffff4d75d7dba3d00dbbe358bb2e15270348f08"
 
 # Calculate the SHA-256 hash of the file
-CALCULATED_HASH=$(sha256sum epoch_94.pth | awk '{ print $1 }')
+CALCULATED_HASH=$(sha256sum gait-turn-time.pth | awk '{ print $1 }')
 
 # Compare the calculated hash to the expected hash
 if [ "$CALCULATED_HASH" != "$EXPECTED_HASH" ]; then
   echo "Error: SHA-256 hash does not match"
 else
   echo "SHA-256 hash matches"
-  cp epoch_94.pth backend/algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/epoch_94.pth
+  cp gait-turn-time.pth backend/algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth
 fi
 
-rm epoch_94.pth
+rm gait-turn-time.pth
 
+wget -O gait-depth-weight.pth https://www.dropbox.com/scl/fi/9yop34l6lz1clxzxv6gf0/gait-depth-weight.pth?rlkey=qfbn9kkwk7z4qfegbww5tu13x
+EXPECTED_HASH="8cddbd270b9e046981892a1184428268a75d955ba01ce7d4019b59ef332f0000"
+
+CALCULATED_HASH=$(sha256sum gait-depth-weight.pth | awk '{ print $1 }')
+# Compare the calculated hash to the expected hash
+if [ "$CALCULATED_HASH" != "$EXPECTED_HASH" ]; then
+  echo "Error: SHA-256 hash does not match"
+else
+  echo "SHA-256 hash matches"
+  cp gait-depth-weight.pth backend/algorithms/gait_basic/depth_alg/weights/gait-depth-weight.pth
+fi
+
+rm gait-depth-weight.pth
