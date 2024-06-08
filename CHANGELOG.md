@@ -1,4 +1,14 @@
 # Changelog
+## v0.6.0
+### New features
+- Support focal length adjustment
+
+### Improvements
+- Change `pretrained_path` to `turn_time_pretrained_path`
+- Change `simple_inference` to `turn_time_simple_inference`
+- Beautify frontend request pages
+
+
 ## v0.5.0
 ### New features
 - Make `docker socket` path adjustable by `.env`
@@ -38,13 +48,16 @@
 ### Improvement
 - Other category (manager/general) can see the video with human and real background
 
+
 ## v0.2.2
 ### New features
 - To protect patient's privacy, the default video change to a black background one with full keypoints shown. The setting can be changed by modify the `get_video` api in `backend/routers/user.py`
 
+
 ## v0.2.1
 ### Improvement
 - Add an automatical timestamp txt fixing logic
+
 
 ## v0.2.0
 ### Improvement
@@ -59,11 +72,13 @@
 - Enable providing a unique trial ID
 - Show uploading progress
 
+
 ## v0.1.1
 ### New features
 - Provide instruction for 3D trajetories conversion
 - Provide solely 2D vedio inference mode
 - Add a verifier for detected keypoints
+
 
 ## v0.1.0
 ### Initial version
