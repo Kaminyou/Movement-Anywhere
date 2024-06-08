@@ -11,6 +11,7 @@ class RequestSchema(Schema):
     date = fields.Date(required=True)
     trialID = fields.Str(required=True, validate=Length(max=200))
     height = fields.Float(default=0.0)
+    focalLength = fields.Float(default=1392.0)
     description = fields.Str(required=False, validate=Length(max=200))
 
     @post_load

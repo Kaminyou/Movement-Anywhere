@@ -18,6 +18,7 @@ class RequestModel(db.Model):
     description = db.Column(db.String(200), nullable=False)
     trialID = db.Column(db.String(200), nullable=False)
     height = db.Column(db.Float, nullable=False, default=0.0)
+    focalLength = db.Column(db.Float, nullable=False, default=1392.0)
 
     toShow = db.Column(db.Boolean, nullable=False, default=True)
 
