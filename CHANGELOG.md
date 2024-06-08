@@ -1,4 +1,9 @@
 # Changelog
+## v0.6.1
+### Improvements
+- A toggle for `focal length` input text box in frontend 
+
+
 ## v0.6.0
 ### New features
 - Support focal length adjustment
