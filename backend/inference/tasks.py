@@ -37,6 +37,7 @@ def inference_gait_task(self, submitUUID: str):
     modelName = request_instance.modelName
     trialID = request_instance.trialID
     height = request_instance.height
+    focalLength = request_instance.focalLength
 
     try:
         inference_gait(
@@ -46,6 +47,7 @@ def inference_gait_task(self, submitUUID: str):
             session=session,
             trial_id=trialID,
             height=height,
+            focal_length=focalLength,
         )
 
         request_instance = session.query(RequestModel).filter_by(
