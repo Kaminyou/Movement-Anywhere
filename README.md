@@ -17,6 +17,7 @@
     JWT_SECRET_KEY=...
     MYSQL_ROOT_PASSWORD=...
     SQLALCHEMY_DATABASE_URI=mysql+pymysql://root:<MYSQL_ROOT_PASSWORD>@db:3306/ndd
+    DOCKER_SOCKET_PATH=... # usually at /var/run/docker.sock
     ```
 4. Please make sure the model weights are present in the following path
     ```
