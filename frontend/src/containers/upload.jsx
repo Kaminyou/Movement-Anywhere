@@ -285,6 +285,15 @@ function UploadPage({ token }) {
         });
         return;
       }
+
+      if (parseFloat(focalLength) <= 0) {
+        swal({
+          title: "Error",
+          text: "A valid focal length value should be provided",
+          icon: "error",
+        });
+        return;
+      }
       formData.append('height', height);
       formData.append('focalLength', focalLength);
     }
