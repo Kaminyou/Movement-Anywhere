@@ -3,7 +3,6 @@ import pickle
 import shutil
 import typing as t
 import time
-import docker
 import pandas as pd
 
 from .._analyzer import Analyzer
@@ -21,6 +20,14 @@ WORK_DIR = '/root/backend'
 START_LINE = 1820
 SVO_EXPORT_RETRY = 2
 DEPTH_SENSING_RETRY = 5
+
+if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
+    # import shutil
+
+    import docker
+
+    CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
+    client = docker.from_env(timeout=120)
 
 
 def avg(left_value, right_value, left_num, right_num):
@@ -85,7 +92,7 @@ def fix_timestamp_file(timestamp_file_path: str, json_path: str):
 class SVOGaitAnalyzer(Analyzer):
     def __init__(
         self,
-        pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/epoch_94.pth',
+        pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
     ):
         self.pretrained_path = pretrained_path
 
@@ -146,6 +153,7 @@ class SVOGaitAnalyzer(Analyzer):
         while (retry < SVO_EXPORT_RETRY) and (not success):
             print(f'retry svo export time: {retry}')
             run_container(
+                client=client,
                 image='zed-env:latest',
                 command=f'timeout 600 python3 /root/svo_export.py "{source_svo_path}" "{meta_avi_path}" 0',
                 volumes={
@@ -153,7 +161,7 @@ class SVOGaitAnalyzer(Analyzer):
                 },
                 working_dir=WORK_DIR,
                 device_requests=[
-                    docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                    docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
                 ],
             )
             retry += 1
@@ -161,6 +169,7 @@ class SVOGaitAnalyzer(Analyzer):
 
         # avi to mp4 (rotate 90 clockwisely)
         run_container(
+            client=client,
             image='zed-env:latest',
             command=f'python3 /root/avi_to_mp4.py --avi-path "{meta_avi_path}" --mp4-path "{meta_mp4_path}"',
             volumes={
@@ -168,12 +177,13 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir=WORK_DIR,
             device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
             ],
         )
 
         # openpose
         run_container(
+            client=client,
             image='openpose-env:latest',
             command=(
                 f'./build/examples/openpose/openpose.bin '
@@ -186,12 +196,13 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir='/openpose',
             device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
             ],
         )
 
         # tracking
         run_container(
+            client=client,
             image='tracking-env:latest',
             command=(
                 f'python3 /root/track.py '
@@ -206,7 +217,7 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir='/root',  # sync with the dry run during the building phase
             device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
             ],
         )
         shutil.copytree(meta_json_path, meta_backup_json_path, dirs_exist_ok=True)
@@ -227,6 +238,7 @@ class SVOGaitAnalyzer(Analyzer):
 
         # render_removed_result
         run_container(
+            client=client,
             image='zed-env:latest',
             command=(
                 f'python3 /root/result_render.py --mp4-path "{meta_mp4_path}" '
@@ -239,12 +251,13 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir=WORK_DIR,
             device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
             ],
         )
 
         # render_removed_result but black backgound
         run_container(
+            client=client,
             image='zed-env:latest',
             command=(
                 f'python3 /root/result_render.py --mp4-path "{meta_mp4_path}" '
@@ -258,7 +271,7 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir=WORK_DIR,
             device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
             ],
         )
 
@@ -270,6 +283,7 @@ class SVOGaitAnalyzer(Analyzer):
         while (retry < DEPTH_SENSING_RETRY) and (not success):
             print(f'retry depth sensing time: {retry}')
             run_container(
+                client=client,
                 image='zed-env:latest',
                 command=(
                     f'timeout 120 /root/depth-sensing/cpp/build/ZED_Depth_Sensing '
@@ -280,7 +294,7 @@ class SVOGaitAnalyzer(Analyzer):
                 },
                 working_dir=WORK_DIR,
                 device_requests=[
-                    docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                    docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
                 ],
             )
             retry += 1
@@ -433,8 +447,8 @@ class SVOGaitAnalyzer(Analyzer):
 class Video2DGaitAnalyzer(Analyzer):
     def __init__(
         self,
-        pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/epoch_94.pth',
-        depth_pretrained_path: str = 'algorithms/gait_basic/depth_alg/weights/49.pth',
+        pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
+        depth_pretrained_path: str = 'algorithms/gait_basic/depth_alg/weights/gait-depth-weight.pth',
     ):
         self.pretrained_path = pretrained_path
         self.depth_pretrained_path = depth_pretrained_path
@@ -473,6 +487,7 @@ class Video2DGaitAnalyzer(Analyzer):
         # algorithm
         # tracking
         run_container(
+            client=client,
             image='tracking-env:latest',
             command=(
                 f'python3 /root/track.py '
@@ -487,7 +502,7 @@ class Video2DGaitAnalyzer(Analyzer):
             },
             working_dir='/root',  # sync with the dry run during the building phase
             device_requests=[
-                docker.types.DeviceRequest(device_ids=['0'], capabilities=[['gpu']]),
+                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
             ],
         )
         mot_dict = load_mot_file(meta_mot_path)
