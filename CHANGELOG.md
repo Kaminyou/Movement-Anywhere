@@ -1,4 +1,19 @@
 # Changelog
+## v0.5.0
+### New features
+- Make `docker socket` path adjustable by `.env`
+- Add depth pre-trained model auto-downloading in `setup.sh`
+
+### Improvements
+- Improve CUDA_VISIBLE_DEVICES` settings
+- Improve `container run` client settings
+- Improve the naming of model weights
+- Enable `setup.sh` to check if all the required docker images exist or not
+
+### Fix bugs
+- Fix `Werkzeug` version bug (conflict with `Flask`)
+
+
 ## v0.4.0
 ### New features
 - Support a 2D only algorithm with a mp4 video and height inputs

@@ -42,3 +42,30 @@ else
 fi
 
 rm gait-depth-weight.pth
+
+# Check if required docker images exist or not
+images=("zed-env:latest" "openpose-env:latest" "tracking-env:latest")
+
+# Counter to keep track of how many images exist
+image_count=0
+
+# Total number of images
+total_images=${#images[@]}
+
+# Loop through the images array
+for image in "${images[@]}"; do
+    # Check if the Docker image exists
+    docker image inspect "$image" > /dev/null 2>&1
+    # Check the status of the last command executed
+    if [ $? -eq 0 ]; then
+        # Increment the counter if the image exists
+        ((image_count++))
+    else
+        echo "ERROR: Image '$image' does not exist."
+    fi
+done
+
+# Check if the count of existing images matches the total number
+if [ $image_count -eq $total_images ]; then
+    echo "All specified images exist."
+fi
