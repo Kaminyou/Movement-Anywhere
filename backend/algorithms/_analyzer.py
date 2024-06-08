@@ -5,9 +5,9 @@ from abc import ABC, abstractmethod
 class Analyzer(ABC):
     def __init__(
         self,
-        pretrained_path: str,
+        turn_time_pretrained_path: str,
     ):
-        self.pretrained_path = pretrained_path
+        self.turn_time_pretrained_path = turn_time_pretrained_path
 
     @abstractmethod
     def run(
@@ -15,5 +15,6 @@ class Analyzer(ABC):
         data_root_dir: str,
         file_id: str,
         height: float = None,
+        focal_length: float = None,
     ) -> t.List[t.Dict[str, t.Any]]:
         pass

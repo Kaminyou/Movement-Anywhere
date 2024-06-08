@@ -18,6 +18,8 @@ def depth_simple_inference(
     detectron_2d_single_person_keypoints_path: str,
     rendered_3d_single_person_keypoints_path: str,
     height: float,
+    model_focal_length: float,
+    used_camera_focal_length: float,
     depth_pretrained_path: str,
     turn_time_mask_path: str,
     device: str = 'cpu',
@@ -89,7 +91,8 @@ def depth_simple_inference(
     right_intervals = indices_to_intervals(right_forward_indices) + indices_to_intervals(right_backward_indices)
     left_intervals = indices_to_intervals(left_forward_indices) + indices_to_intervals(left_backward_indices)
 
-    gait_parameters = get_gait_parameter(right_intervals, out_re, leg='right') + get_gait_parameter(left_intervals, out_re, leg='left')
+    sl_adjust = used_camera_focal_length / model_focal_length
+    gait_parameters = get_gait_parameter(right_intervals, out_re, leg='right', sl_adjust=sl_adjust) + get_gait_parameter(left_intervals, out_re, leg='left', sl_adjust=sl_adjust)
     final_output = summarize_gait_parameters(gait_parameters)
 
     return final_output, gait_parameters
