@@ -19,7 +19,10 @@ def inference_gait(
 ):
     try:
         model_focal_length = get_focal_length_by_model_name(modelName)
-        analyzer = data_and_model_map_to_class(data_type=dataType, model_name=modelName)(model_focal_length=model_focal_length)
+        analyzer = data_and_model_map_to_class(
+            data_type=dataType,
+            model_name=modelName,
+        )(model_focal_length=model_focal_length)
     except Exception as e:
         print(e)
         raise ValueError(f'dataType={dataType} and modelName={modelName} not exist')

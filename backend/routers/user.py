@@ -95,7 +95,7 @@ def upload_gait_svo():
             focal_length = request_obj.focalLength
             if math.isclose(focal_length, -1):
                 raise ValueError('focal length is not provided')
-            
+
             if focal_length <= 0:
                 raise ValueError('focal length should be > 0')
 

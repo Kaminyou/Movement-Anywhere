@@ -243,11 +243,11 @@ def manager_upload_gait_csv():
             if height == 0.0:
                 current_app.logger.info('height is not provided')
                 raise ValueError('height is not provided')
-            
+
             focal_length = request_obj.focalLength
             if math.isclose(focal_length, -1):
                 raise ValueError('focal length is not provided')
-            
+
             if focal_length <= 0:
                 raise ValueError('focal length should be > 0')
 
