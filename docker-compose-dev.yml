@@ -21,13 +21,13 @@ services:
       dockerfile: backend.Dockerfile
     container_name: gait-anywhere-backend-dev
     environment:
-      - FLASK_DEBUG=1
-      - APP_SETTINGS=project.server.config.DevelopmentConfig
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - MOUNT=${PWD}/backend
+      FLASK_DEBUG: 1
+      APP_SETTINGS: 'project.server.config.DevelopmentConfig'
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+      CELERY_BROKER_URL: 'redis://redis:6379/0'
+      CELERY_RESULT_BACKEND: 'redis://redis:6379/0'
+      MOUNT: ${PWD}/backend
     working_dir: /root/backend
     deploy:
       resources:
@@ -40,7 +40,7 @@ services:
       - 47001:5000
     volumes:
       - ./backend:/root/backend
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock
     depends_on:
       - db
   db:
@@ -62,17 +62,19 @@ services:
     command: celery --app inference.tasks.celery worker -P solo --loglevel=info --logfile=inference/logs/celery.log
     volumes:
       - ./backend:/root/backend
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock
     working_dir: /root/backend
     environment:
-      - FLASK_DEBUG=1
-      - APP_SETTINGS=project.server.config.DevelopmentConfig
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
-      - RESULT_DIR=/root/backend/data/
-      - CUDA_DEVICE_ORDER=PCI_BUS_ID
-      - MOUNT=${PWD}/backend
+      FLASK_DEBUG: 1
+      APP_SETTINGS: 'project.server.config.DevelopmentConfig'
+      CELERY_BROKER_URL: 'redis://redis:6379/0'
+      CELERY_RESULT_BACKEND: 'redis://redis:6379/0'
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+      RESULT_DIR: '/root/backend/data/'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+      MOUNT: ${PWD}/backend
+      CELERY_WORKER: gait-worker
     deploy:
       resources:
         reservations:
