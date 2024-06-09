@@ -1,4 +1,13 @@
 version: '3'
+
+x-common-variables: &common-variables
+  CELERY_BROKER_URL: 'redis://redis:6379/0'
+  CELERY_BACKEND_URL: 'redis://redis:6379/1'
+  TASK_SYNC_URL: 'redis://redis:6379/2'
+  SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+  BACKEND_FOLDER_PATH: ${PWD}/backend
+  SYNC_FILE_SERVER_STORE_PATH: ${SYNC_FILE_SERVER_STORE_PATH}
+
 services:
   frontend:
     build: 
@@ -10,10 +19,14 @@ services:
       - 47000:3000
     depends_on:
       - backend
+      - file_server
     stdin_open: true
     tty: true
     volumes:
       - ./frontend:/root/frontend
+    networks:
+      - gait_anywhere_network
+
   backend:
     image: gait-anywhere-backend:latest
     build:
@@ -21,13 +34,10 @@ services:
       dockerfile: backend.Dockerfile
     container_name: gait-anywhere-backend-dev
     environment:
+      <<: *common-variables
       FLASK_DEBUG: 1
       APP_SETTINGS: 'project.server.config.DevelopmentConfig'
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
-      CELERY_BROKER_URL: 'redis://redis:6379/0'
-      CELERY_RESULT_BACKEND: 'redis://redis:6379/0'
-      MOUNT: ${PWD}/backend
     working_dir: /root/backend
     deploy:
       resources:
@@ -41,8 +51,13 @@ services:
     volumes:
       - ./backend:/root/backend
       - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock
+      - ${SYNC_FILE_SERVER_STORE_PATH}:/data
     depends_on:
       - db
+      - file_server
+    networks:
+      - gait_anywhere_network
+
   db:
     image: mysql:8
     container_name: gait-anywhere-db-dev
@@ -50,12 +65,18 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     ports:
-      - 53000:3306
+      - 47002:3306
     volumes:
       - ./database/sql:/docker-entrypoint-initdb.d
+    networks:
+      - gait_anywhere_network
+
   redis:
     image: redis:6-alpine
     container_name: gait-anywhere-redis-dev
+    networks:
+      - gait_anywhere_network
+
   worker:
     image: gait-anywhere-backend:latest
     container_name: gait-anywhere-worker-dev
@@ -63,17 +84,14 @@ services:
     volumes:
       - ./backend:/root/backend
       - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock
+      - ${SYNC_FILE_SERVER_STORE_PATH}:/data
     working_dir: /root/backend
     environment:
+      <<: *common-variables
       FLASK_DEBUG: 1
       APP_SETTINGS: 'project.server.config.DevelopmentConfig'
-      CELERY_BROKER_URL: 'redis://redis:6379/0'
-      CELERY_RESULT_BACKEND: 'redis://redis:6379/0'
-      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
-      RESULT_DIR: '/root/backend/data/'
       CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
       CUDA_VISIBLE_DEVICES: '0'
-      MOUNT: ${PWD}/backend
       CELERY_WORKER: gait-worker
     deploy:
       resources:
@@ -85,28 +103,27 @@ services:
       - backend
       - db
       - redis
-  dashboard:
-    image: gait-anywhere-backend:latest
-    container_name: gait-anywhere-dashboard-dev
-    working_dir: /root/backend
-    command: celery --app inference.tasks.celery flower --port=5555 --broker=redis://redis:6379/0
+      - file_server
+    networks:
+      - gait_anywhere_network
+
+  file_server:
+    image: gait-anywhere-file_server
+    build:
+      context: ./file_server/
+      dockerfile: Dockerfile
+    container_name: gait-anywhere-file_server
     ports:
-      - 47002:5555
+      - 47003:5000
+    stdin_open: true
+    tty: true
     volumes:
-      - ./backend:/root/backend
-    environment:
-      - FLASK_DEBUG=1
-      - APP_SETTINGS=project.server.config.DevelopmentConfig
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
-    depends_on:
-      - frontend
-      - backend
-      - db
-      - redis
-      - worker
+      - ${SYNC_FILE_SERVER_STORE_PATH}:/data
+    working_dir: /data
+    command: dufs -p 5000 --auth-method basic --auth ${SYNC_FILE_SERVER_USER}:${SYNC_FILE_SERVER_PASSWORD}@/:rw  -A .
+    networks:
+      - gait_anywhere_network
+
+networks:
+  gait_anywhere_network:
+    name: gait_anywhere_network

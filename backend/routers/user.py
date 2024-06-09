@@ -62,7 +62,7 @@ def upload_gait_svo():
 
         submit_uuid = request_obj.submitUUID
 
-        data_root = f'data/{submit_uuid}'
+        data_root = f'/data/{submit_uuid}'
         os.makedirs(data_root)
         os.makedirs(os.path.join(data_root, 'input'))
         data_type = request_obj.dataType
@@ -347,9 +347,9 @@ def get_video():
 
         video_uuid = request.args.get('id')
         user_instance = UserModel.find_by_account(account=account)
-        video_path = f'data/{video_uuid}/out/render.mp4'
+        video_path = f'/data/{video_uuid}/out/render.mp4'
         if user_instance.__dict__['category'] == UserCategoryEnum.researcher:
-            video_path = f'data/{video_uuid}/out/render-black-background.mp4'
+            video_path = f'/data/{video_uuid}/out/render-black-background.mp4'
 
         if os.path.exists(video_path):
             return send_file(video_path), HTTPStatus.OK

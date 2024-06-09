@@ -18,6 +18,9 @@
     MYSQL_ROOT_PASSWORD=...
     SQLALCHEMY_DATABASE_URI=mysql+pymysql://root:<MYSQL_ROOT_PASSWORD>@db:3306/ndd
     DOCKER_SOCKET_PATH=... # usually at /var/run/docker.sock
+    SYNC_FILE_SERVER_STORE_PATH=... # find somewhere large enough to save the results
+    SYNC_FILE_SERVER_USER=...
+    SYNC_FILE_SERVER_PASSWORD=...
     ```
 4. Please make sure the model weights are present in the following path
     ```
