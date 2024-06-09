@@ -16,11 +16,12 @@ from .utils.track import (
 )
 
 
-MOUNT = os.environ['MOUNT']
+BACKEND_FOLDER_PATH = os.environ['BACKEND_FOLDER_PATH']
 WORK_DIR = '/root/backend'
 START_LINE = 1820
 SVO_EXPORT_RETRY = 2
 DEPTH_SENSING_RETRY = 5
+SYNC_FILE_SERVER_STORE_PATH = os.environ['SYNC_FILE_SERVER_STORE_PATH']
 
 if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
     # import shutil
@@ -159,7 +160,8 @@ class SVOGaitAnalyzer(Analyzer):
                 image='zed-env:latest',
                 command=f'timeout 600 python3 /root/svo_export.py "{source_svo_path}" "{meta_avi_path}" 0',
                 volumes={
-                    MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                    BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                    SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
                 },
                 working_dir=WORK_DIR,
                 device_requests=[
@@ -175,7 +177,8 @@ class SVOGaitAnalyzer(Analyzer):
             image='zed-env:latest',
             command=f'python3 /root/avi_to_mp4.py --avi-path "{meta_avi_path}" --mp4-path "{meta_mp4_path}"',
             volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
             },
             working_dir=WORK_DIR,
             device_requests=[
@@ -194,7 +197,8 @@ class SVOGaitAnalyzer(Analyzer):
                 f'--display 0'
             ),
             volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
             },
             working_dir='/openpose',
             device_requests=[
@@ -215,7 +219,8 @@ class SVOGaitAnalyzer(Analyzer):
                 f'--save-mot --save-mot-path {meta_mot_path} --device cuda:0'
             ),
             volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
             },
             working_dir='/root',  # sync with the dry run during the building phase
             device_requests=[
@@ -249,7 +254,8 @@ class SVOGaitAnalyzer(Analyzer):
                 f'--rendered-mp4-path "{meta_rendered_mp4_path}"'
             ),
             volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
             },
             working_dir=WORK_DIR,
             device_requests=[
@@ -269,7 +275,8 @@ class SVOGaitAnalyzer(Analyzer):
                 f'--draw-all-keypoints --draw-black-background'
             ),
             volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
             },
             working_dir=WORK_DIR,
             device_requests=[
@@ -292,7 +299,8 @@ class SVOGaitAnalyzer(Analyzer):
                     f'{meta_json_path} {source_txt_path} {source_svo_path} {meta_csv_path}'
                 ),
                 volumes={
-                    MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                    BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                    SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
                 },
                 working_dir=WORK_DIR,
                 device_requests=[
@@ -506,7 +514,8 @@ class Video2DGaitAnalyzer(Analyzer):
                 f'--save-mot --save-mot-path {meta_mot_path} --device cuda:0'
             ),
             volumes={
-                MOUNT: {'bind': WORK_DIR, 'mode': 'rw'},
+                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
+                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
             },
             working_dir='/root',  # sync with the dry run during the building phase
             device_requests=[

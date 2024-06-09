@@ -214,7 +214,7 @@ def manager_upload_gait_csv():
         request_obj = RequestModel(**form_data)
 
         submit_uuid = request_obj.submitUUID
-        data_root = f'data/{submit_uuid}'
+        data_root = f'/data/{submit_uuid}'
         os.makedirs(data_root)
         os.makedirs(os.path.join(data_root, 'input'))
         data_type = request_obj.dataType
