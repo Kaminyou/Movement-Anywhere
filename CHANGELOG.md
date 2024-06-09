@@ -1,4 +1,12 @@
 # Changelog
+## v0.7.0
+### New features
+- Add a file server
+
+### Improvements
+- Enable storing uploaded/result files at any path
+- Add `trial ID` and `description` to the downloaded report
+
 ## v0.6.1
 ### Improvements
 - A toggle for `focal length` input text box in frontend 
