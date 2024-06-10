@@ -29,6 +29,8 @@ if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
     import docker
     from .tasks.track_and_extract_task import track_and_extract_task
     from .tasks.turn_time_task import turn_time_task
+    from .tasks.depth_estimation_task import depth_estimation_task
+    from .tasks.video_generation_task import video_generation_task
 
     CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
     client = docker.from_env(timeout=120)
@@ -112,47 +114,46 @@ class Video2DGaitAnalyzer(Analyzer):
                 tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
             except TimeoutError:
                 print('Timeout!')
+        
+        final_output = {}
+        gait_parameters = []
+        depth_estimation_config = {
+            'file_id': file_id,
+            'height': height,
+            'model_focal_length': self.model_focal_length,
+            'focal_length': focal_length,
+            'depth_pretrained_path': self.depth_pretrained_path,
+        }
+        depth_estimation_task_instance = depth_estimation_task.delay(submit_uuid, depth_estimation_config)
+        while not depth_estimation_task_instance.ready():
+            time.sleep(3)
 
-        final_output, gait_parameters = depth_simple_inference(
-            detectron_2d_single_person_keypoints_path=meta_custom_dataset_path,
-            rendered_3d_single_person_keypoints_path=output_3dkeypoint_path,
-            height=height,
-            model_focal_length=self.model_focal_length,
-            used_camera_focal_length=focal_length,
-            depth_pretrained_path=self.depth_pretrained_path,
-            turn_time_mask_path=output_raw_turn_time_prediction_path,
-            device='cpu',
-        )
+        if depth_estimation_task_instance.failed():
+            raise RuntimeError('Depth Estimation Task falied!')
 
-        output_shown_mp4_path_temp = output_shown_mp4_path + '.tmp.mp4'
-        new_render(
-            video_path=source_mp4_path,
-            detectron_custom_dataset_path=meta_custom_dataset_path,
-            tt_pickle_path=output_raw_turn_time_prediction_path,
-            output_video_path=output_shown_mp4_path_temp,
-            draw_keypoint=True,
-        )
-        # browser mp4v encoding issue -> convert to h264
-        os.system(f'ffmpeg -y -i {output_shown_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_mp4_path}')  # noqa
-        os.system(f'rm {output_shown_mp4_path_temp}')
+        with allow_join_result():
+            def on_msg(*args, **kwargs):
+                print(f'on_msg: {args}, {kwargs}')
+            try:
+                final_output, gait_parameters = depth_estimation_task_instance.get(on_message=on_msg, timeout=10)
+            except TimeoutError:
+                print('Timeout!')
 
-        output_shown_black_background_mp4_path_temp = output_shown_black_background_mp4_path + '.tmp.mp4'  # noqa
-        new_render(
-            video_path=source_mp4_path,
-            detectron_custom_dataset_path=meta_custom_dataset_path,
-            tt_pickle_path=output_raw_turn_time_prediction_path,
-            output_video_path=output_shown_black_background_mp4_path_temp,
-            draw_keypoint=True,
-            draw_background=False,
-        )
-        os.system(f'ffmpeg -y -i {output_shown_black_background_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_black_background_mp4_path}')  # noqa
-        os.system(f'rm {output_shown_black_background_mp4_path_temp}')
+        video_generation_config = {
+            'file_id': file_id,
+        }
+        video_generation_task_instance = video_generation_task.delay(submit_uuid, video_generation_config)
+        while not video_generation_task_instance.ready():
+            time.sleep(3)
 
-        sl = final_output['sl']
-        sw = final_output['sw']
-        st = final_output['st']
-        velocity = final_output['v']
-        cadence = final_output['c']
+        if video_generation_task_instance.failed():
+            raise RuntimeError('Video Generation Task falied!')
+
+        sl = final_output.get('sl', -1)
+        sw = final_output.get('sw', -1)
+        st = final_output.get('st', -1)
+        velocity = final_output.get('v', -1)
+        cadence = final_output.get('c', -1)
 
         return [
             {

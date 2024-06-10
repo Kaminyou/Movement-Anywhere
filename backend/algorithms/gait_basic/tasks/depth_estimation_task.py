@@ -9,8 +9,7 @@ from redis import Redis
 from algorithms._runner import Runner
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
-
-from algorithms.gait_basic.gait_study_semi_turn_time.inference import turn_time_simple_inference
+from algorithms.gait_basic.depth_alg.inference import depth_simple_inference
 
 
 SYNC_FILE_SERVER_URL = os.environ['SYNC_FILE_SERVER_URL']
@@ -24,7 +23,7 @@ TASK_SYNC_URL = os.environ.get('TASK_SYNC_URL')
 FOLDER_TO_STORE_TEMP_FILE_PATH = os.environ.get('FOLDER_TO_STORE_TEMP_FILE_PATH')
 DOCKER_NETWORK = os.environ.get('DOCKER_NETWORK', None)
 
-WORKER_WORKING_DIR_PATH = os.path.join('/root/data/', 'turn_time')
+WORKER_WORKING_DIR_PATH = os.path.join('/root/data/', 'depth_estimation')
 
 BACKEND_FOLDER_PATH = os.environ['BACKEND_FOLDER_PATH']
 WORK_DIR = '/root/backend'
@@ -38,7 +37,7 @@ app = Celery(
 )
 
 
-class TurnTimeTaskRunner(Runner):
+class DepthEstimationTaskRunner(Runner):
     def __init__(
         self,
         submit_uuid: str,
@@ -57,49 +56,58 @@ class TurnTimeTaskRunner(Runner):
         self.result_hook = result_hook
 
         # input
+        self.input_custom_dataset_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
+        self.input_custom_dataset_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
+
         self.input_3dkeypoint_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', '3d', f'{self.file_id}.mp4.npy')
         self.input_3dkeypoint_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '3d', f'{self.file_id}.mp4.npy')
 
-        # output
-        self.output_raw_turn_time_prediction_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
-        self.output_raw_turn_time_prediction_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
-
+        self.input_raw_turn_time_prediction_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
+        self.input_raw_turn_time_prediction_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
+        
     def fetch_data(self):
         self.update_state(state='PROGRESS', meta={'progress': 0, 'stage': 'fetching data'})
+        self.data_synchronizer.download(
+            src=self.input_custom_dataset_path_remote,
+            des=self.input_custom_dataset_path_local,
+        )
         self.data_synchronizer.download(
             src=self.input_3dkeypoint_path_remote,
             des=self.input_3dkeypoint_path_local,
         )
+        self.data_synchronizer.download(
+            src=self.input_raw_turn_time_prediction_path_remote,
+            des=self.input_raw_turn_time_prediction_path_local,
+        )
 
     def upload_data(self):
-        self.update_state(state='PROGRESS', meta={'progress': 100, 'stage': 'uploading data'})
-        self.data_synchronizer.upload(
-            src=self.output_raw_turn_time_prediction_path_local,
-            des=self.output_raw_turn_time_prediction_path_remote,
-        )
+        pass
 
     def execute(self):
-        tt, raw_tt_prediction = turn_time_simple_inference(
-            turn_time_pretrained_path=self.config['turn_time_pretrained_path'],
-            path_to_npz=self.input_3dkeypoint_path_local,
-            return_raw_prediction=True,
+        final_output, gait_parameters = depth_simple_inference(
+            detectron_2d_single_person_keypoints_path=self.input_custom_dataset_path_local,
+            rendered_3d_single_person_keypoints_path=self.input_3dkeypoint_path_local,
+            height=self.config['height'],
+            model_focal_length=self.config['model_focal_length'],
+            used_camera_focal_length=self.config['focal_length'],
+            depth_pretrained_path=self.config['depth_pretrained_path'],
+            turn_time_mask_path=self.input_raw_turn_time_prediction_path_local,
+            device='cpu',
         )
-
-        with open(self.output_raw_turn_time_prediction_path_local, 'wb') as handle:
-            pickle.dump(raw_tt_prediction, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
         if self.result_hook is not None:
-            self.result_hook['tt'] = tt
+            self.result_hook['final_output'] = final_output
+            self.result_hook['gait_parameters'] = gait_parameters
 
     def clear(self):
         shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid))
 
 
-@app.task(bind=True, name='turn_time_task', queue='turn_time_task_queue')
-def turn_time_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
+@app.task(bind=True, name='depth_estimation_task', queue='depth_estimation_task_queue')
+def depth_estimation_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
 
     redis = Redis.from_url(TASK_SYNC_URL)
-    key = f'turn_time_task_{submit_uuid}'
+    key = f'depth_estimation_task_{submit_uuid}'
     if redis.exists(key):
         print(f'Skip this task since {key} exists')
         return True
@@ -112,9 +120,12 @@ def turn_time_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
         password=SYNC_FILE_SERVER_PASSWORD,
     )
 
-    result_hook = {'tt': -1}
+    result_hook = {
+        'final_output': {},
+        'gait_parameters': [],
+    }
 
-    runner = TurnTimeTaskRunner(
+    runner = DepthEstimationTaskRunner(
         submit_uuid=submit_uuid,
         config=config,
         data_synchronizer=data_synchronizer,
@@ -126,4 +137,4 @@ def turn_time_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
     self.update_state(state='PROGRESS', meta={'progress': 0, 'stage': 'start'})
     runner.run()
 
-    return result_hook['tt']
+    return (result_hook['final_output'], result_hook['gait_parameters'])
