@@ -2,6 +2,7 @@ import math
 import os
 import pickle
 import shutil
+import time
 import typing as t
 
 from .._analyzer import Analyzer
@@ -24,6 +25,7 @@ SYNC_FILE_SERVER_STORE_PATH = os.environ['SYNC_FILE_SERVER_STORE_PATH']
 if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
 
     import docker
+    from .tasks.track_and_extract_task import track_and_extract_task
 
     CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
     client = docker.from_env(timeout=120)
@@ -45,6 +47,7 @@ class Video2DGaitAnalyzer(Analyzer):
 
     def run(
         self,
+        submit_uuid: str,
         data_root_dir: str,
         file_id: str,
         height: float,
@@ -77,47 +80,15 @@ class Video2DGaitAnalyzer(Analyzer):
 
         # algorithm
         # tracking
-        run_container(
-            client=client,
-            image='tracking-env:latest',
-            command=(
-                f'python3 /root/track.py '
-                f'--source "{source_mp4_path}" '
-                f'--yolo-model yolov8s.pt '
-                f'--classes 0 --tracking-method deepocsort '
-                f'--reid-model clip_market1501.pt '
-                f'--save-mot --save-mot-path {meta_mot_path} --device cuda:0'
-            ),
-            volumes={
-                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
-                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
-            },
-            working_dir='/root',  # sync with the dry run during the building phase
-            device_requests=[
-                docker.types.DeviceRequest(
-                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
-                    capabilities=[['gpu']],
-                ),
-            ],
-        )
-        mot_dict = load_mot_file(meta_mot_path)
-        count = count_frames(source_mp4_path)
-        targeted_person_ids, targeted_person_bboxes = find_continuous_personal_bbox(count, mot_dict)
+        config = {
+            'file_id': file_id,
+        }
+        track_and_extract_task_instance = track_and_extract_task.delay(submit_uuid, config)
+        while not track_and_extract_task_instance.ready():
+            time.sleep(3)
 
-        with open(meta_targeted_person_bboxes_path, 'wb') as handle:
-            pickle.dump(targeted_person_bboxes, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        # old pipeline
-        shutil.copyfile(source_mp4_path, meta_mp4_path)
-
-        os.system(
-            'cd algorithms/gait_basic/VideoPose3D && python3 quick_run.py '
-            f'--mp4_video_folder "{meta_mp4_folder}" '
-            f'--keypoint_2D_video_folder "{output_2dkeypoint_folder}" '
-            f'--keypoint_3D_video_folder "{output_3dkeypoint_folder}" '
-            f'--targeted-person-bboxes-path "{meta_targeted_person_bboxes_path}" '
-            f'--custom-dataset-path "{meta_custom_dataset_path}"'
-        )
+        if track_and_extract_task_instance.failed():
+            raise RuntimeError('Track and Extract Task falied!')
 
         tt, raw_tt_prediction = turn_time_simple_inference(
             turn_time_pretrained_path=self.turn_time_pretrained_path,
