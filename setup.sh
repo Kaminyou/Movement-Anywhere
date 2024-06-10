@@ -43,20 +43,6 @@ fi
 
 rm gait-depth-weight.pth
 
-wget -O 2024-05-04-1-14.mp4 https://www.dropbox.com/scl/fi/lhqayqkiq9uv7gg9b7b8r/2024-05-04-1-14.mp4?rlkey=nma5rcfmubrxqt4h935jzyht6
-EXPECTED_HASH="9aebd7f85e91f5c3818382af67592f7514eedf077fee30c8509dd2474a728ae5"
-
-CALCULATED_HASH=$(sha256sum 2024-05-04-1-14.mp4 | awk '{ print $1 }')
-# Compare the calculated hash to the expected hash
-if [ "$CALCULATED_HASH" != "$EXPECTED_HASH" ]; then
-  echo "Error: SHA-256 hash does not match"
-else
-  echo "SHA-256 hash matches"
-  cp 2024-05-04-1-14.mp4 test_data/2024-05-04-1-14.mp4
-fi
-
-rm 2024-05-04-1-14.mp4
-
 # Check if required docker images exist or not
 images=("zed-env:latest" "openpose-env:latest" "tracking-env:latest")
 
