@@ -1,4 +1,14 @@
 # Changelog
+## v0.7.1
+### New features
+- Add integration tests
+- Add a synchronizer
+
+### Improvements
+- Improve the usage of `celery`
+- Improve func import in the SVO algorithm
+
+
 ## v0.7.0
 ### New features
 - Add a file server
