@@ -34,16 +34,18 @@ def api_token():
 @pytest.fixture(scope='module')
 def submit_data(api_token):
     headers = {'Authorization': f'Bearer {api_token}'}
-    mp4_file_path = 'test_data/2024-05-04-1-14.mp4'
-    with open(mp4_file_path, 'rb') as f:
-        files = {'mp4File': f}
+    svo_file_path = 'test_data/2024-05-04-1-14.svo'
+    txt_file_path = 'test_data/2024-05-04-1-14.txt'
+    with open(svo_file_path, 'rb') as f_svo, open(txt_file_path, 'rb') as f_txt:
+        files = {
+            'svoFile': f_svo,
+            'txtFile': f_txt,
+        }
         data = {
-            'height': '170.0',
-            'focalLength': '1080',
-            'dataType': 'gait_mp4',
-            'modelName': 'gait_2d::v1',
+            'dataType': 'gait_svo_and_txt',
+            'modelName': 'gait_svo::v1',
             'date': '2024-05-04',
-            'description': 'test_integration',
+            'description': 'test_integration_svo',
             'trialID': '2024-05-04-1-14',
         }
         response = requests.post(
@@ -58,13 +60,14 @@ def submit_data(api_token):
 
 
 @pytest.mark.integration
-def test_integration_2d_file_submission(submit_data):
+def test_integration_3d_file_submission(submit_data):
     task_id, submit_uuid = submit_data['task_id'], submit_data['submit_uuid']
-    assert os.path.exists(os.path.join('/data', submit_uuid, 'input', '2024-05-04-1-14.mp4'))
+    assert os.path.exists(os.path.join('/data', submit_uuid, 'input', '2024-05-04-1-14.svo'))
+    assert os.path.exists(os.path.join('/data', submit_uuid, 'input', '2024-05-04-1-14.txt'))
 
     # Wait for the task to complete
     task_obj = scheduler.AsyncResult(task_id)
-    MAX_WAITING_TIME = 300
+    MAX_WAITING_TIME = 600
     for time_accum in range(0, MAX_WAITING_TIME, 10):
         if task_obj.ready():
             break
@@ -94,11 +97,11 @@ def test_integration_2d_file_submission(submit_data):
         } for row in records}
 
         expected_gait_parameters = {
-            'stride length': {'value': 86.17495809649598, 'unit': 'cm'},
-            'stride width': {'value': 25.288623413071036, 'unit': 'cm'},
-            'stride time': {'value': 1.356666666666667, 'unit': 's'},
-            'velocity': {'value': 0.6375351744041505, 'unit': 'm/s'},
-            'cadence': {'value': 44.32016122516764, 'unit': '1/min'},
+            'stride length': {'value': 85.89533333333335, 'unit': 'cm'},
+            'stride width': {'value': 30.146693333333296, 'unit': 'cm'},
+            'stride time': {'value': 1.355, 'unit': 's'},
+            'velocity': {'value': 0.633913899138991, 'unit': 'm/s'},
+            'cadence': {'value': 44.280442804428, 'unit': '1/min'},
             'turn time': {'value': 1.71, 'unit': 's'},
         }
 

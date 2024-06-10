@@ -2,7 +2,6 @@ import pickle
 import typing as t
 
 import numpy as np
-import numpy.typing as npt
 import torch
 
 from .dataset import InferenceTrialData, inference_one_trial
@@ -40,19 +39,18 @@ def depth_simple_inference(
     out = inference_one_trial(trial_data, model, device)
     out_re = out * np.array([1000, 500, 10000, 1000, 500, 10000])
 
-    # f'/home/kaminyou/dev/PathoOpenGait-dev/backend/real_data/{trial_id}/out/{trial_id}-tt.pickle'
     with open(turn_time_mask_path, 'rb') as f:
         turn_time_mask = np.array(pickle.load(f), dtype=bool)
 
     positive_max_indices = compute_first_idx_in_positive_intervals(
         out_re[:, 2] - out_re[:, 5],
-    ) # right
+    )  # right
     negative_max_indices = compute_first_idx_in_positive_intervals(
         out_re[:, 5] - out_re[:, 2],
-    ) # left
+    )  # left
 
-    filtered_positive_max_indices = filter_indices(positive_max_indices, turn_time_mask) # right
-    filtered_negative_max_indices = filter_indices(negative_max_indices, turn_time_mask) # left
+    filtered_positive_max_indices = filter_indices(positive_max_indices, turn_time_mask)  # right
+    filtered_negative_max_indices = filter_indices(negative_max_indices, turn_time_mask)  # left
 
     turn_interval_pair = find_true_index_pair(turn_time_mask)
 
@@ -88,11 +86,21 @@ def depth_simple_inference(
         depth_min=1500,
     )
 
-    right_intervals = indices_to_intervals(right_forward_indices) + indices_to_intervals(right_backward_indices)
-    left_intervals = indices_to_intervals(left_forward_indices) + indices_to_intervals(left_backward_indices)
+    right_intervals = indices_to_intervals(right_forward_indices) + indices_to_intervals(right_backward_indices)  # noqa
+    left_intervals = indices_to_intervals(left_forward_indices) + indices_to_intervals(left_backward_indices)  # noqa
 
     sl_adjust = used_camera_focal_length / model_focal_length
-    gait_parameters = get_gait_parameter(right_intervals, out_re, leg='right', sl_adjust=sl_adjust) + get_gait_parameter(left_intervals, out_re, leg='left', sl_adjust=sl_adjust)
+    gait_parameters = get_gait_parameter(
+        right_intervals,
+        out_re,
+        leg='right',
+        sl_adjust=sl_adjust,
+    ) + get_gait_parameter(
+        left_intervals,
+        out_re,
+        leg='left',
+        sl_adjust=sl_adjust,
+    )
     final_output = summarize_gait_parameters(gait_parameters)
 
     return final_output, gait_parameters

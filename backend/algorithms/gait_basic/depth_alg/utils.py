@@ -11,7 +11,7 @@ def compute_first_idx_in_positive_intervals(
     positive_regions = []
     current_region = []
     indices_of_first_in_regions = []
-    
+
     # Identify positive regions
     for i, num in enumerate(arr):
         if num > 0:
@@ -22,14 +22,15 @@ def compute_first_idx_in_positive_intervals(
                 current_region = []
     if current_region:  # Add the last region if there is one
         positive_regions.append(current_region)
-    
+
     # Find index of first value in each positive region
     for region in positive_regions:
         values, indices = zip(*region)
         first_value_index = indices[0]
         indices_of_first_in_regions.append(first_value_index)
-    
+
     return indices_of_first_in_regions
+
 
 def filter_indices(
     original_indices: t.List[int],
@@ -41,19 +42,21 @@ def filter_indices(
             new_indices.append(index)
     return new_indices
 
+
 def find_true_index_pair(arr: npt.NDArray[bool]) -> t.Tuple[int, int]:
     # Find indices of all True values
     true_indices = np.where(arr)[0]
-    
+
     # Initialize variables to hold the first and last True indices
     first_true = None
     last_true = None
-    
+
     if true_indices.size > 0:  # Check if there is at least one True
         first_true = true_indices[0]
         last_true = true_indices[-1]
-    
+
     return (first_true, last_true)
+
 
 def split_indices(
     original_indices: t.List[int],
@@ -69,6 +72,7 @@ def split_indices(
             after.append(original_index)
     return before, after
 
+
 def filter_indices_by_depth(
     indices: t.List[int],
     depth: npt.NDArray,
@@ -80,6 +84,7 @@ def filter_indices_by_depth(
             continue
         new_indices.append(index)
     return new_indices
+
 
 def indices_to_intervals(indices: t.List[int]) -> t.List[t.List[int]]:
     n = len(indices)
@@ -98,6 +103,7 @@ def indices_to_intervals(indices: t.List[int]) -> t.List[t.List[int]]:
         intervals_new.append(interval)
     return intervals_new
 
+
 def get_gait_parameter(
     intervals: t.List[t.List[int]],
     signals: npt.NDArray,
@@ -110,11 +116,11 @@ def get_gait_parameter(
         idx = 5
     results = []
     for interval in intervals:
-        sl = abs(signals[:, idx][interval[1]] - signals[:, idx][interval[0]]) / 10 * sl_adjust # cm
+        sl = abs(signals[:, idx][interval[1]] - signals[:, idx][interval[0]]) / 10 * sl_adjust  # cm
         sw = np.abs(signals[:, 1] - signals[:, 4])[interval[0]] / 10  # cm
         st = (interval[1] - interval[0]) / 30  # s
-        v = sl / 100 / st # m/s
-        c = 1 / st * 60 # 1/s
+        v = sl / 100 / st  # m/s
+        c = 1 / st * 60  # 1/s
         results.append(
             {
                 'start': interval[0],
@@ -128,6 +134,7 @@ def get_gait_parameter(
             },
         )
     return results
+
 
 def summarize_gait_parameters(gait_parameters: t.List[t.Dict[str, float]]) -> t.Dict[str, float]:
     out = {}

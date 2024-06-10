@@ -69,11 +69,11 @@ def render(data_root_dir: str):
                 s=15,
                 color='crimson')
             ax.plot(
-                [xx[10], xx[8], xx[6], xx[5], xx[7], xx[9]], [yy[10], yy[8], yy[6], yy[5], yy[7], yy[9]],
+                [xx[10], xx[8], xx[6], xx[5], xx[7], xx[9]], [yy[10], yy[8], yy[6], yy[5], yy[7], yy[9]],  # noqa
                 color='crimson',
             )
-            ax.plot([xx[6], xx[12], xx[14], xx[16]], [yy[6], yy[12], yy[14], yy[16]], color='crimson')
-            ax.plot([xx[5], xx[11], xx[13], xx[15]], [yy[5], yy[11], yy[13], yy[15]], color='crimson')
+            ax.plot([xx[6], xx[12], xx[14], xx[16]], [yy[6], yy[12], yy[14], yy[16]], color='crimson')  # noqa
+            ax.plot([xx[5], xx[11], xx[13], xx[15]], [yy[5], yy[11], yy[13], yy[15]], color='crimson')  # noqa
             ax.plot([xx[12], xx[11]], [yy[12], yy[11]], color='crimson')
 
             # Annotate the current frame type
@@ -96,7 +96,7 @@ def render(data_root_dir: str):
 
 
 def gen_pairs(keypoint_idx_list: t.List[int]):
-    pairs = [(keypoint_idx_list[i], keypoint_idx_list[i + 1]) for i in range(len(keypoint_idx_list) - 1)]
+    pairs = [(keypoint_idx_list[i], keypoint_idx_list[i + 1]) for i in range(len(keypoint_idx_list) - 1)]  # noqa
     return pairs
 
 
@@ -192,7 +192,16 @@ def new_render(
         lower_left_corner = (100, 200 - text_height - margin)
         upper_right_corner = (100 + text_width + margin, 200 + margin)
         cv2.rectangle(frame, lower_left_corner, upper_right_corner, (0, 0, 255), cv2.FILLED)
-        cv2.putText(frame, text, (100, 200), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+        cv2.putText(
+            frame,
+            text,
+            (100, 200),
+            font,
+            font_scale,
+            (255, 255, 255),
+            font_thickness,
+            cv2.LINE_AA,
+        )
 
         out.write(frame)
     out.release()

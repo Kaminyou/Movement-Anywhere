@@ -1,7 +1,7 @@
 import typing as t
 
 from algorithms._analyzer import Analyzer
-from algorithms.gait_basic.main import SVOGaitAnalyzer, Video2DGaitAnalyzer
+from algorithms.gait_basic import SVOGaitAnalyzer, Video2DGaitAnalyzer
 
 
 GAIT_SVO_MODELS_SIMPLE = {
