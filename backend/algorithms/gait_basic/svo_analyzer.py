@@ -40,8 +40,8 @@ class SVOGaitAnalyzer(Analyzer):
 
     def run(
         self,
-        data_root_dir,  # ='/home/kaminyou/repos/PathoOpenGait/backend/data/test_data/'
-        file_id,  # '2021-04-01-1-4'
+        data_root_dir: str,
+        file_id: str,
         **kwargs,
     ) -> t.List[t.Dict[str, t.Any]]:
 

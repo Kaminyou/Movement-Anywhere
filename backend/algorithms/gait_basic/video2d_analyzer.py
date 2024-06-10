@@ -45,8 +45,8 @@ class Video2DGaitAnalyzer(Analyzer):
 
     def run(
         self,
-        data_root_dir,
-        file_id,
+        data_root_dir: str,
+        file_id: str,
         height: float,
         focal_length: float,
     ) -> t.List[t.Dict[str, t.Any]]:
