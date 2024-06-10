@@ -159,6 +159,26 @@ services:
       CUDA_VISIBLE_DEVICES: '0'
     command: celery --app algorithms.gait_basic.tasks.turn_time_task worker -Q turn_time_task_queue -n turn_time-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/turn_time-worker1.log
 
+  depth_estimation-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-depth_estimation-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.depth_estimation_task worker -Q depth_estimation_task_queue -n depth_estimation-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/depth_estimation-worker1.log
+
+  video_generation-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-video_generation-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.video_generation_task worker -Q video_generation_task_queue -n video_generation-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/video_generation-worker1.log
+
 networks:
   gait_anywhere_network:
     name: gait_anywhere_network
