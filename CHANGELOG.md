@@ -1,4 +1,9 @@
 # Changelog
+## v0.8.0
+### New features
+- Implement distributed inference for the 2D algorithm
+
+
 ## v0.7.2
 ### New features
 - Add 3d integration tests

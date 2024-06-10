@@ -59,7 +59,7 @@ const versionStyle = {
           </button>
           <div style={navbarBrandStyle}>
             <HashLink className="navbar-brand page-scroll" smooth to="/#header">Gait Anywhere</HashLink>
-            <span style={versionStyle}>v0.6.0</span>
+            <span style={versionStyle}>v0.8.0</span>
         </div>
           {/* <HashLink className="navbar-brand page-scroll" smooth to="/#header">PathoOpenGait</HashLink> */}
           {/* <a className="navbar-brand page-scroll" href="#page-top">
