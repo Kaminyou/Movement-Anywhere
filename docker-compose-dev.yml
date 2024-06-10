@@ -174,6 +174,16 @@ services:
       CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
       CUDA_VISIBLE_DEVICES: '0'
     command: celery --app algorithms.gait_basic.tasks.track_and_extract_task worker -Q track_and_extract_task_queue -n track_and_extract-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/track_and_extract-worker1.log
+  
+  turn_time-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-turn_time-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.turn_time_task worker -Q turn_time_task_queue -n turn_time-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/turn_time-worker1.log
 
 networks:
   gait_anywhere_network:

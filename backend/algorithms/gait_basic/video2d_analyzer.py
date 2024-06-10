@@ -5,6 +5,8 @@ import shutil
 import time
 import typing as t
 
+from celery.result import allow_join_result
+
 from .._analyzer import Analyzer
 from .gait_study_semi_turn_time.inference import turn_time_simple_inference
 from .depth_alg.inference import depth_simple_inference
@@ -26,6 +28,7 @@ if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
 
     import docker
     from .tasks.track_and_extract_task import track_and_extract_task
+    from .tasks.turn_time_task import turn_time_task
 
     CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
     client = docker.from_env(timeout=120)
@@ -80,24 +83,35 @@ class Video2DGaitAnalyzer(Analyzer):
 
         # algorithm
         # tracking
-        config = {
+        track_and_extract_config = {
             'file_id': file_id,
         }
-        track_and_extract_task_instance = track_and_extract_task.delay(submit_uuid, config)
+        track_and_extract_task_instance = track_and_extract_task.delay(submit_uuid, track_and_extract_config)
         while not track_and_extract_task_instance.ready():
             time.sleep(3)
 
         if track_and_extract_task_instance.failed():
             raise RuntimeError('Track and Extract Task falied!')
 
-        tt, raw_tt_prediction = turn_time_simple_inference(
-            turn_time_pretrained_path=self.turn_time_pretrained_path,
-            path_to_npz=output_3dkeypoint_path,
-            return_raw_prediction=True,
-        )
+        turn_time_config = {
+            'file_id': file_id,
+            'turn_time_pretrained_path': self.turn_time_pretrained_path,
+        }
+        turn_time_task_instance = turn_time_task.delay(submit_uuid, turn_time_config)
+        while not turn_time_task_instance.ready():
+            time.sleep(3)
 
-        with open(output_raw_turn_time_prediction_path, 'wb') as handle:
-            pickle.dump(raw_tt_prediction, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        if turn_time_task_instance.failed():
+            raise RuntimeError('Turn Time Task falied!')
+
+        tt = -1
+        with allow_join_result():
+            def on_msg(*args, **kwargs):
+                print(f'on_msg: {args}, {kwargs}')
+            try:
+                tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
+            except TimeoutError:
+                print('Timeout!')
 
         final_output, gait_parameters = depth_simple_inference(
             detectron_2d_single_person_keypoints_path=meta_custom_dataset_path,
