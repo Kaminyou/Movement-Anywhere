@@ -72,7 +72,7 @@ services:
   worker:
     image: gait-anywhere-backend:latest
     container_name: gait-anywhere-worker
-    command: celery --app inference.tasks.celery worker -P solo --loglevel=info --logfile=inference/logs/celery.log
+    command: celery --app inference.tasks worker -P solo --loglevel=info --logfile=inference/logs/celery.log
     volumes:
       - ./backend:/root/backend
       - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock

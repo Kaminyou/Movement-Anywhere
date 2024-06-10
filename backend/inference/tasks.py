@@ -10,12 +10,19 @@ from models import RequestModel
 from .gait import inference_gait
 
 
-celery = Celery(__name__)
-celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379")
-celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379")
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379")
+CELERY_BACKEND_URL = os.environ.get("CELERY_BACKEND_URL", "redis://redis:6379")
+
+app = Celery(
+    'tasks',
+    broker=CELERY_BROKER_URL,
+    backend=CELERY_BACKEND_URL,
+    result_expires=0,  # with the default setting, redis TTL is set to 1
+    broker_transport_options={'visibility_timeout': 1382400},  # 16 days
+)
 
 
-@celery.task(bind=True, name='inference_gait_task', default_retry_delay=60)
+@app.task(bind=True, name='inference_gait_task', default_retry_delay=60)
 def inference_gait_task(self, submitUUID: str):
     print(submitUUID)
     """

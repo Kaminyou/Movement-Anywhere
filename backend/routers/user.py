@@ -109,6 +109,7 @@ def upload_gait_svo():
                 {
                     'msg': 'File uploaded successfully',
                     'task_id': task.id,
+                    'submit_uuid': request_obj.submitUUID,
                 },
                 HTTPStatus.OK,
             )

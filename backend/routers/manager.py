@@ -261,6 +261,7 @@ def manager_upload_gait_csv():
                 {
                     'msg': 'File uploaded successfully',
                     'task_id': task.id,
+                    'submit_uuid': request_obj.submitUUID,
                 },
                 HTTPStatus.OK,
             )
