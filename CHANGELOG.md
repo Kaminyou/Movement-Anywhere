@@ -1,7 +1,16 @@
 # Changelog
+## v0.7.2
+### New features
+- Add 3d integration tests
+
+### Improvements
+- Improve the analyzer structure
+- Linting for `gait_basic`
+
+
 ## v0.7.1
 ### New features
-- Add integration tests
+- Add 2d integration tests
 - Add a synchronizer
 
 ### Improvements
