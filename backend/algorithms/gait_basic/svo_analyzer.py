@@ -1,19 +1,17 @@
-import math
 import os
 import pickle
 import shutil
 import typing as t
-import time
 import pandas as pd
 
 from .._analyzer import Analyzer
 from .gait_study_semi_turn_time.inference import turn_time_simple_inference
-from .depth_alg.inference import depth_simple_inference
-from .utils.make_video import new_render, render, count_frames
+from .utils.make_video import new_render
 from .utils.track import (
     count_json_file, find_continuous_personal_bbox, load_mot_file,
-    remove_non_target_person, run_container, set_zero_prob_for_keypoint_before_start_line,
+    remove_non_target_person, set_zero_prob_for_keypoint_before_start_line,
 )
+from .utils.docker_utils import run_container
 from .utils.calculate import add_newline_if_missing, avg, fix_timestamp_file, replace_in_filenames
 
 
@@ -35,7 +33,7 @@ if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
 class SVOGaitAnalyzer(Analyzer):
     def __init__(
         self,
-        turn_time_pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
+        turn_time_pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',  # noqa
         **kwargs,
     ):
         self.turn_time_pretrained_path = turn_time_pretrained_path
@@ -66,7 +64,7 @@ class SVOGaitAnalyzer(Analyzer):
         meta_mot_path = os.path.join(data_root_dir, 'out', f'{file_id}.mot.txt')
         meta_backup_json_path = os.path.join(data_root_dir, 'out', f'{file_id}-json_backup/')
         meta_rendered_mp4_path = os.path.join(data_root_dir, 'out', f'{file_id}-rendered.mp4')
-        meta_targeted_person_bboxes_path = os.path.join(data_root_dir, 'out', f'{file_id}-target_person_bboxes.pickle')
+        meta_targeted_person_bboxes_path = os.path.join(data_root_dir, 'out', f'{file_id}-target_person_bboxes.pickle')  # noqa
 
         # output
         # source_csv = os.path.join(data_root_dir, 'csv', f'{file_id}.csv')
@@ -78,15 +76,15 @@ class SVOGaitAnalyzer(Analyzer):
         # output_2dkeypoint_path = os.path.join(data_root_dir, 'out', '2d', f'{file_id}.mp4.npz')
         output_3dkeypoint_folder = os.path.join(data_root_dir, 'out', '3d')
         output_3dkeypoint_path = os.path.join(data_root_dir, 'out', '3d', f'{file_id}.mp4.npy')
-        meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')
-        output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')
+        meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')  # noqa
+        output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')  # noqa
         output_shown_mp4_path = os.path.join(data_root_dir, 'out', 'render.mp4')
         output_detectron_mp4_path = os.path.join(data_root_dir, 'out', 'render-detectron.mp4')
         # output_gait_folder = os.path.join(data_root_dir, 'out', f'{file_id}-rgait-output/')
 
         # additional black background
-        meta_rendered_black_background_mp4_path = os.path.join(data_root_dir, 'out', f'{file_id}-rendered-black-background.mp4')
-        output_shown_black_background_mp4_path = os.path.join(data_root_dir, 'out', 'render-black-background.mp4')
+        meta_rendered_black_background_mp4_path = os.path.join(data_root_dir, 'out', f'{file_id}-rendered-black-background.mp4')  # noqa
+        output_shown_black_background_mp4_path = os.path.join(data_root_dir, 'out', 'render-black-background.mp4')  # noqa
 
         if not add_newline_if_missing(source_txt_path):
             print('add a new line to txt')
@@ -99,14 +97,17 @@ class SVOGaitAnalyzer(Analyzer):
             run_container(
                 client=client,
                 image='zed-env:latest',
-                command=f'timeout 600 python3 /root/svo_export.py "{source_svo_path}" "{meta_avi_path}" 0',
+                command=f'timeout 600 python3 /root/svo_export.py "{source_svo_path}" "{meta_avi_path}" 0',  # noqa
                 volumes={
                     BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
                     SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
                 },
                 working_dir=WORK_DIR,
                 device_requests=[
-                    docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
+                    docker.types.DeviceRequest(
+                        device_ids=CUDA_VISIBLE_DEVICES.split(','),
+                        capabilities=[['gpu']],
+                    ),
                 ],
             )
             retry += 1
@@ -116,14 +117,17 @@ class SVOGaitAnalyzer(Analyzer):
         run_container(
             client=client,
             image='zed-env:latest',
-            command=f'python3 /root/avi_to_mp4.py --avi-path "{meta_avi_path}" --mp4-path "{meta_mp4_path}"',
+            command=f'python3 /root/avi_to_mp4.py --avi-path "{meta_avi_path}" --mp4-path "{meta_mp4_path}"',  # noqa
             volumes={
                 BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
                 SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
             },
             working_dir=WORK_DIR,
             device_requests=[
-                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
+                docker.types.DeviceRequest(
+                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
+                    capabilities=[['gpu']],
+                ),
             ],
         )
 
@@ -134,7 +138,7 @@ class SVOGaitAnalyzer(Analyzer):
             command=(
                 f'./build/examples/openpose/openpose.bin '
                 f'--video {meta_avi_path} --write-video {meta_keypoints_avi_path} '
-                f'--write-json {meta_json_path} --frame_rotate 270 --camera_resolution 1920x1080 '
+                f'--write-json {meta_json_path} --frame_rotate 270 --camera_resolution 1920x1080 '  # noqa
                 f'--display 0'
             ),
             volumes={
@@ -143,7 +147,10 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir='/openpose',
             device_requests=[
-                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
+                docker.types.DeviceRequest(
+                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
+                    capabilities=[['gpu']],
+                ),
             ],
         )
 
@@ -165,7 +172,10 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir='/root',  # sync with the dry run during the building phase
             device_requests=[
-                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
+                docker.types.DeviceRequest(
+                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
+                    capabilities=[['gpu']],
+                ),
             ],
         )
         shutil.copytree(meta_json_path, meta_backup_json_path, dirs_exist_ok=True)
@@ -200,7 +210,10 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir=WORK_DIR,
             device_requests=[
-                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
+                docker.types.DeviceRequest(
+                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
+                    capabilities=[['gpu']],
+                ),
             ],
         )
 
@@ -221,7 +234,10 @@ class SVOGaitAnalyzer(Analyzer):
             },
             working_dir=WORK_DIR,
             device_requests=[
-                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
+                docker.types.DeviceRequest(
+                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
+                    capabilities=[['gpu']],
+                ),
             ],
         )
 
@@ -245,7 +261,10 @@ class SVOGaitAnalyzer(Analyzer):
                 },
                 working_dir=WORK_DIR,
                 device_requests=[
-                    docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
+                    docker.types.DeviceRequest(
+                        device_ids=CUDA_VISIBLE_DEVICES.split(','),
+                        capabilities=[['gpu']],
+                    ),
                 ],
             )
             retry += 1
@@ -267,7 +286,10 @@ class SVOGaitAnalyzer(Analyzer):
                 os.path.join(gait_folder_path, 'input', '2001-01-01-1', '2001-01-01-1-1.csv'),
             )
             os.system(f'cd {gait_folder_path} && Rscript gait_batch.R input/20010101.csv')
-            shutil.copyfile(os.path.join(gait_folder_path, 'output/2001-01-01-1/2001-01-01-1.csv'), output_csv)
+            shutil.copyfile(
+                os.path.join(gait_folder_path, 'output/2001-01-01-1/2001-01-01-1.csv'),
+                output_csv,
+            )
             replace_in_filenames(gait_folder_path, '2001-01-01-1', file_id)
         except Exception as e:
             print(e, 'No 3D csv')
@@ -333,7 +355,7 @@ class SVOGaitAnalyzer(Analyzer):
             os.system(f'rm {output_shown_mp4_path_temp}')
 
             # for black background
-            output_shown_black_background_mp4_path_temp = output_shown_black_background_mp4_path + '.tmp.mp4'
+            output_shown_black_background_mp4_path_temp = output_shown_black_background_mp4_path + '.tmp.mp4'  # noqa
             new_render(
                 video_path=meta_rendered_black_background_mp4_path,
                 detectron_custom_dataset_path=meta_custom_dataset_path,
@@ -371,183 +393,6 @@ class SVOGaitAnalyzer(Analyzer):
             {
                 'key': 'stride time',
                 'value': st / 1000,
-                'unit': 's',
-                'type': 'float',
-            },
-            {
-                'key': 'velocity',
-                'value': velocity,
-                'unit': 'm/s',
-                'type': 'float',
-            },
-            {
-                'key': 'cadence',
-                'value': cadence,
-                'unit': '1/min',
-                'type': 'float',
-            },
-            {
-                'key': 'turn time',
-                'value': tt,
-                'unit': 's',
-                'type': 'float',
-            },
-        ]
-
-
-class Video2DGaitAnalyzer(Analyzer):
-    def __init__(
-        self,
-        turn_time_pretrained_path: str = 'algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth',
-        depth_pretrained_path: str = 'algorithms/gait_basic/depth_alg/weights/gait-depth-weight.pth',
-        model_focal_length: float = 1392.0,
-        **kwargs,
-    ):
-        self.turn_time_pretrained_path = turn_time_pretrained_path
-        self.depth_pretrained_path = depth_pretrained_path
-        if math.isclose(model_focal_length, -1):
-            raise ValueError('model focal length is not provided')
-        self.model_focal_length = model_focal_length
-
-    def run(
-        self,
-        data_root_dir,
-        file_id,
-        height: float,
-        focal_length: float,
-    ) -> t.List[t.Dict[str, t.Any]]:
-
-        os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
-        os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
-        os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
-        os.makedirs(os.path.join(data_root_dir, 'video'), exist_ok=True)
-
-        # input
-        source_mp4_path = os.path.join(data_root_dir, 'input', f'{file_id}.mp4')
-
-        # meta output (for non-target person removing)
-        meta_mot_path = os.path.join(data_root_dir, 'out', f'{file_id}.mot.txt')
-        meta_mp4_folder = os.path.join(data_root_dir, 'video')
-        meta_mp4_path = os.path.join(data_root_dir, 'video', f'{file_id}.mp4')
-        meta_targeted_person_bboxes_path = os.path.join(data_root_dir, 'out', f'{file_id}-target_person_bboxes.pickle')
-
-        # output
-        output_2dkeypoint_folder = os.path.join(data_root_dir, 'out', '2d')
-        output_3dkeypoint_folder = os.path.join(data_root_dir, 'out', '3d')
-        output_3dkeypoint_path = os.path.join(data_root_dir, 'out', '3d', f'{file_id}.mp4.npy')
-        meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')
-        output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')
-
-        output_shown_mp4_path = os.path.join(data_root_dir, 'out', 'render.mp4')
-        output_shown_black_background_mp4_path = os.path.join(data_root_dir, 'out', 'render-black-background.mp4')
-
-        # algorithm
-        # tracking
-        run_container(
-            client=client,
-            image='tracking-env:latest',
-            command=(
-                f'python3 /root/track.py '
-                f'--source "{source_mp4_path}" '
-                f'--yolo-model yolov8s.pt '
-                f'--classes 0 --tracking-method deepocsort '
-                f'--reid-model clip_market1501.pt '
-                f'--save-mot --save-mot-path {meta_mot_path} --device cuda:0'
-            ),
-            volumes={
-                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
-                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
-            },
-            working_dir='/root',  # sync with the dry run during the building phase
-            device_requests=[
-                docker.types.DeviceRequest(device_ids=CUDA_VISIBLE_DEVICES.split(','), capabilities=[['gpu']]),
-            ],
-        )
-        mot_dict = load_mot_file(meta_mot_path)
-        count = count_frames(source_mp4_path)
-        targeted_person_ids, targeted_person_bboxes = find_continuous_personal_bbox(count, mot_dict)
-
-        with open(meta_targeted_person_bboxes_path, 'wb') as handle:
-            pickle.dump(targeted_person_bboxes, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        # old pipeline
-        shutil.copyfile(source_mp4_path, meta_mp4_path)
-
-        os.system(
-            'cd algorithms/gait_basic/VideoPose3D && python3 quick_run.py '
-            f'--mp4_video_folder "{meta_mp4_folder}" '
-            f'--keypoint_2D_video_folder "{output_2dkeypoint_folder}" '
-            f'--keypoint_3D_video_folder "{output_3dkeypoint_folder}" '
-            f'--targeted-person-bboxes-path "{meta_targeted_person_bboxes_path}" '
-            f'--custom-dataset-path "{meta_custom_dataset_path}"'
-        )
-
-        tt, raw_tt_prediction = turn_time_simple_inference(
-            turn_time_pretrained_path=self.turn_time_pretrained_path,
-            path_to_npz=output_3dkeypoint_path,
-            return_raw_prediction=True,
-        )
-
-        with open(output_raw_turn_time_prediction_path, 'wb') as handle:
-            pickle.dump(raw_tt_prediction, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        final_output, gait_parameters = depth_simple_inference(
-            detectron_2d_single_person_keypoints_path=meta_custom_dataset_path,
-            rendered_3d_single_person_keypoints_path=output_3dkeypoint_path,
-            height=height,
-            model_focal_length=self.model_focal_length,
-            used_camera_focal_length=focal_length,
-            depth_pretrained_path=self.depth_pretrained_path,
-            turn_time_mask_path=output_raw_turn_time_prediction_path,
-            device='cpu',
-        )
-
-        output_shown_mp4_path_temp = output_shown_mp4_path + '.tmp.mp4'
-        new_render(
-            video_path=source_mp4_path,
-            detectron_custom_dataset_path=meta_custom_dataset_path,
-            tt_pickle_path=output_raw_turn_time_prediction_path,
-            output_video_path=output_shown_mp4_path_temp,
-            draw_keypoint=True,
-        )
-        # browser mp4v encoding issue -> convert to h264
-        os.system(f'ffmpeg -y -i {output_shown_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_mp4_path}')  # noqa
-        os.system(f'rm {output_shown_mp4_path_temp}')
-
-        output_shown_black_background_mp4_path_temp = output_shown_black_background_mp4_path + '.tmp.mp4'
-        new_render(
-            video_path=source_mp4_path,
-            detectron_custom_dataset_path=meta_custom_dataset_path,
-            tt_pickle_path=output_raw_turn_time_prediction_path,
-            output_video_path=output_shown_black_background_mp4_path_temp,
-            draw_keypoint=True,
-            draw_background=False,
-        )
-        os.system(f'ffmpeg -y -i {output_shown_black_background_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_black_background_mp4_path}')  # noqa
-        os.system(f'rm {output_shown_black_background_mp4_path_temp}')
-
-        sl = final_output['sl']
-        sw = final_output['sw']
-        st = final_output['st']
-        velocity = final_output['v']
-        cadence = final_output['c']
-
-        return [
-            {
-                'key': 'stride length',
-                'value': sl,
-                'unit': 'cm',
-                'type': 'float',
-            },
-            {
-                'key': 'stride width',
-                'value': sw,
-                'unit': 'cm',
-                'type': 'float',
-            },
-            {
-                'key': 'stride time',
-                'value': st,
                 'unit': 's',
                 'type': 'float',
             },

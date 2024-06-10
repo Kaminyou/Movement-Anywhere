@@ -33,13 +33,13 @@ if __name__ == '__main__':
     # DON'T MODIFY
     labeled_train_dataset = SignalDataset(train_trial_paths)
     unlabeled_train_dataset = SignalSSLDataset(semi_train_trial_paths)
-    
+
     site_1_test_dataset = []
     for eval_trial_path in site_1_eval_trial_paths:
         instance = GaitTrialInstance(eval_trial_path)
         instance.load_gt(PATIENT_INFO)
         site_1_test_dataset.append(instance)
-    
+
     site_2_test_dataset = []
     for eval_trial_path in site_2_eval_trial_paths:
         instance = GaitTrialInstance(eval_trial_path)
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     model.to(device)
     for epoch in range(epoches):
         print(f'=== Epoch {epoch} ===')
-        
+
         semi_train(
             epoch,
             labeled_train_dataset,
@@ -79,8 +79,24 @@ if __name__ == '__main__':
         )
         evaluate(epoch, site_1_test_dataset, model, device=device, prefix='site1-', writer=writer)
         evaluate(epoch, site_2_test_dataset, model, device=device, prefix='site2-', writer=writer)
-        integrated_evaluation(epoch, site_1_eval_trial_paths, PATIENT_INFO, model, device=device, prefix='site1-', writer=writer)
-        integrated_evaluation(epoch, site_2_eval_trial_paths, PATIENT_INFO, model, device=device, prefix='site2-', writer=writer)
+        integrated_evaluation(
+            epoch,
+            site_1_eval_trial_paths,
+            PATIENT_INFO,
+            model,
+            device=device,
+            prefix='site1-',
+            writer=writer,
+        )
+        integrated_evaluation(
+            epoch,
+            site_2_eval_trial_paths,
+            PATIENT_INFO,
+            model,
+            device=device,
+            prefix='site2-',
+            writer=writer,
+        )
         # model.to('cpu')
         torch.save(model.state_dict(), os.path.join(weight_path, f'epoch_{epoch}.pth'))
         # model.to(device)

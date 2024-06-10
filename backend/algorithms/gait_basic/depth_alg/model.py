@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 
-class SignalNet(nn.Module): # [85, 129] -> [N]
+class SignalNet(nn.Module):  # [85, 129] -> [N]
 
     def __init__(self, in_channels=85, num_of_class=6):
         super(SignalNet, self).__init__()
@@ -20,12 +20,12 @@ class SignalNet(nn.Module): # [85, 129] -> [N]
         )
 
         self.linear = nn.Sequential(
-            nn.Linear(4096 ,1024),
+            nn.Linear(4096, 1024),
             nn.LeakyReLU(inplace=True),
             nn.Linear(1024, num_of_class),
         )
 
-    def forward(self,x):
+    def forward(self, x):
         x = self.model(x)
         x = x.view(x.size(0), -1)
         x = self.linear(x)

@@ -1,4 +1,3 @@
-import os
 import typing as t
 from functools import lru_cache
 
@@ -27,8 +26,8 @@ class InferenceTrialData:
         self.height = height
         self.use_height = use_height
 
-        self.detectron_2d_single_person_keypoints_path = detectron_2d_single_person_keypoints_path  # os.path.join(root_path, trial_id, 'out', f'{trial_id}-custom-dataset.npz')
-        self.rendered_3d_single_person_keypoints_path = rendered_3d_single_person_keypoints_path  # os.path.join(root_path, trial_id, 'out/3d', f'{trial_id}.mp4.npy')
+        self.detectron_2d_single_person_keypoints_path = detectron_2d_single_person_keypoints_path
+        self.rendered_3d_single_person_keypoints_path = rendered_3d_single_person_keypoints_path
 
         self._parse_detectron_2d_single_person_keypoints()
         self._parse_rendered_3d_single_person_keypoints()
@@ -39,7 +38,7 @@ class InferenceTrialData:
         data = np.load(self.detectron_2d_single_person_keypoints_path, allow_pickle=True)
         k = list(data.f.positions_2d.item().keys())[0]
         self.detectron_2d_keypoints = data.f.positions_2d.item()[k]['custom'][0]  # T, 17, 2
-        self.detectron_2d_keypoints_normalized = self.detectron_2d_keypoints / np.array([1080, 1920])
+        self.detectron_2d_keypoints_normalized = self.detectron_2d_keypoints / np.array([1080, 1920])  # noqa
 
     def _parse_rendered_3d_single_person_keypoints(self):
         data = np.load(self.rendered_3d_single_person_keypoints_path)

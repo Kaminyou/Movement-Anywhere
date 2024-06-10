@@ -47,11 +47,14 @@ def turn_time_simple_inference(
     preds = np.array(preds)
     probs = np.array(probs)
     preds_postprocess = ndimage.binary_erosion(preds, structure=np.ones(10)).astype(preds.dtype)
-    preds_postprocess = ndimage.binary_dilation(preds_postprocess, structure=np.ones(10)).astype(preds_postprocess.dtype)
+    preds_postprocess = ndimage.binary_dilation(
+        preds_postprocess,
+        structure=np.ones(10),
+    ).astype(preds_postprocess.dtype)
 
     try:
         pred_turn_time = group_continuous_ones(preds_postprocess).max()
-    except:
+    except Exception:
         pred_turn_time = 0
 
     if return_raw_prediction:
@@ -76,7 +79,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    turn_time = simple_inference(
+    turn_time = turn_time_simple_inference(
         turn_time_pretrained_path=args.pretrained_path,
         path_to_npz=args.npz_file_path,
     )
