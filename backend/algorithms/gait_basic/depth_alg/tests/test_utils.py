@@ -1,3 +1,5 @@
+import numpy as np
+
 from ..utils import summarize_gait_parameters
 
 
