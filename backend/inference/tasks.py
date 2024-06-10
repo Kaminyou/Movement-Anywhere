@@ -21,6 +21,7 @@ app = Celery(
     broker_transport_options={'visibility_timeout': 1382400},  # 16 days
 )
 
+
 @app.task(bind=True, name='inference_gait_task', default_retry_delay=60)
 def inference_gait_task(self, submitUUID: str):
     print(submitUUID)
