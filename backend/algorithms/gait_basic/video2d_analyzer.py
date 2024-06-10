@@ -1,20 +1,11 @@
 import math
 import os
-import pickle
-import shutil
 import time
 import typing as t
 
 from celery.result import allow_join_result
 
 from .._analyzer import Analyzer
-from .gait_study_semi_turn_time.inference import turn_time_simple_inference
-from .depth_alg.inference import depth_simple_inference
-from .utils.make_video import new_render, count_frames
-from .utils.track import (
-    find_continuous_personal_bbox, load_mot_file
-)
-from .utils.docker_utils import run_container
 
 
 BACKEND_FOLDER_PATH = os.environ['BACKEND_FOLDER_PATH']
@@ -64,42 +55,30 @@ class Video2DGaitAnalyzer(Analyzer):
         os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'video'), exist_ok=True)
 
-        # input
-        source_mp4_path = os.path.join(data_root_dir, 'input', f'{file_id}.mp4')
-
-        # meta output (for non-target person removing)
-        meta_mot_path = os.path.join(data_root_dir, 'out', f'{file_id}.mot.txt')
-        meta_mp4_folder = os.path.join(data_root_dir, 'video')
-        meta_mp4_path = os.path.join(data_root_dir, 'video', f'{file_id}.mp4')
-        meta_targeted_person_bboxes_path = os.path.join(data_root_dir, 'out', f'{file_id}-target_person_bboxes.pickle')  # noqa
-
-        # output
-        output_2dkeypoint_folder = os.path.join(data_root_dir, 'out', '2d')
-        output_3dkeypoint_folder = os.path.join(data_root_dir, 'out', '3d')
-        output_3dkeypoint_path = os.path.join(data_root_dir, 'out', '3d', f'{file_id}.mp4.npy')
-        meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')  # noqa
-        output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')  # noqa
-
-        output_shown_mp4_path = os.path.join(data_root_dir, 'out', 'render.mp4')
-        output_shown_black_background_mp4_path = os.path.join(data_root_dir, 'out', 'render-black-background.mp4')  # noqa
-
         # algorithm
         # tracking
         track_and_extract_config = {
             'file_id': file_id,
         }
-        track_and_extract_task_instance = track_and_extract_task.delay(submit_uuid, track_and_extract_config)
+        track_and_extract_task_instance = track_and_extract_task.delay(
+            submit_uuid,
+            track_and_extract_config,
+        )
         while not track_and_extract_task_instance.ready():
             time.sleep(3)
 
         if track_and_extract_task_instance.failed():
             raise RuntimeError('Track and Extract Task falied!')
 
+        # turn time
         turn_time_config = {
             'file_id': file_id,
             'turn_time_pretrained_path': self.turn_time_pretrained_path,
         }
-        turn_time_task_instance = turn_time_task.delay(submit_uuid, turn_time_config)
+        turn_time_task_instance = turn_time_task.delay(
+            submit_uuid,
+            turn_time_config,
+        )
         while not turn_time_task_instance.ready():
             time.sleep(3)
 
@@ -114,7 +93,8 @@ class Video2DGaitAnalyzer(Analyzer):
                 tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
             except TimeoutError:
                 print('Timeout!')
-        
+
+        # depth estimation and gait parameters
         final_output = {}
         gait_parameters = []
         depth_estimation_config = {
@@ -124,7 +104,10 @@ class Video2DGaitAnalyzer(Analyzer):
             'focal_length': focal_length,
             'depth_pretrained_path': self.depth_pretrained_path,
         }
-        depth_estimation_task_instance = depth_estimation_task.delay(submit_uuid, depth_estimation_config)
+        depth_estimation_task_instance = depth_estimation_task.delay(
+            submit_uuid,
+            depth_estimation_config,
+        )
         while not depth_estimation_task_instance.ready():
             time.sleep(3)
 
@@ -135,14 +118,21 @@ class Video2DGaitAnalyzer(Analyzer):
             def on_msg(*args, **kwargs):
                 print(f'on_msg: {args}, {kwargs}')
             try:
-                final_output, gait_parameters = depth_estimation_task_instance.get(on_message=on_msg, timeout=10)
+                final_output, gait_parameters = depth_estimation_task_instance.get(
+                    on_message=on_msg,
+                    timeout=10,
+                )
             except TimeoutError:
                 print('Timeout!')
 
+        # video generation
         video_generation_config = {
             'file_id': file_id,
         }
-        video_generation_task_instance = video_generation_task.delay(submit_uuid, video_generation_config)
+        video_generation_task_instance = video_generation_task.delay(
+            submit_uuid,
+            video_generation_config,
+        )
         while not video_generation_task_instance.ready():
             time.sleep(3)
 

@@ -1,15 +1,15 @@
-import typing as t
 import os
 import shutil
-import pickle
+import typing as t
 
 from celery import Celery
 from redis import Redis
 
 from algorithms._runner import Runner
+from algorithms.gait_basic.utils.make_video import new_render
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
-from algorithms.gait_basic.utils.make_video import new_render
+
 
 SYNC_FILE_SERVER_URL = os.environ['SYNC_FILE_SERVER_URL']
 SYNC_FILE_SERVER_PORT = os.environ['SYNC_FILE_SERVER_PORT']
@@ -53,25 +53,75 @@ class VideoGenerationTaskRunner(Runner):
         self.update_state = update_state
 
         # input
-        self.input_mp4_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'input', f'{self.file_id}.mp4')
-        self.input_mp4_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'input', f'{self.file_id}.mp4')
+        self.input_mp4_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'input',
+            f'{self.file_id}.mp4',
+        )
+        self.input_mp4_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'input',
+            f'{self.file_id}.mp4',
+        )
 
-        self.input_custom_dataset_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
-        self.input_custom_dataset_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
+        self.input_custom_dataset_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-custom-dataset.npz',
+        )
+        self.input_custom_dataset_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-custom-dataset.npz',
+        )
 
-        self.input_raw_turn_time_prediction_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
-        self.input_raw_turn_time_prediction_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
+        self.input_raw_turn_time_prediction_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-tt.pickle',
+        )
+        self.input_raw_turn_time_prediction_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-tt.pickle',
+        )
 
         # output
-        self.output_shown_mp4_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', 'render.mp4')
-        self.output_shown_mp4_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', 'render.mp4')
+        self.output_shown_mp4_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            'render.mp4',
+        )
+        self.output_shown_mp4_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            'render.mp4',
+        )
 
-        self.output_shown_black_background_mp4_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', 'render-black-background.mp4')  # noqa
-        self.output_shown_black_background_mp4_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', 'render-black-background.mp4')  # noqa
+        self.output_shown_black_background_mp4_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            'render-black-background.mp4',
+        )
+        self.output_shown_black_background_mp4_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            'render-black-background.mp4',
+        )
 
         # meta
         self.output_shown_mp4_path_temp_local = self.output_shown_mp4_path_local + '.tmp.mp4'
-        self.output_shown_black_background_mp4_path_temp_local = self.output_shown_black_background_mp4_path_local + '.tmp.mp4'
+        self.output_shown_black_background_mp4_path_temp_local = self.output_shown_black_background_mp4_path_local + '.tmp.mp4'  # noqa
 
     def fetch_data(self):
         self.update_state(state='PROGRESS', meta={'progress': 0, 'stage': 'fetching data'})

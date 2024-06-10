@@ -1,15 +1,14 @@
-import typing as t
 import os
 import shutil
-import pickle
+import typing as t
 
 from celery import Celery
 from redis import Redis
 
 from algorithms._runner import Runner
+from algorithms.gait_basic.depth_alg.inference import depth_simple_inference
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
-from algorithms.gait_basic.depth_alg.inference import depth_simple_inference
 
 
 SYNC_FILE_SERVER_URL = os.environ['SYNC_FILE_SERVER_URL']
@@ -56,15 +55,47 @@ class DepthEstimationTaskRunner(Runner):
         self.result_hook = result_hook
 
         # input
-        self.input_custom_dataset_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
-        self.input_custom_dataset_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
+        self.input_custom_dataset_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-custom-dataset.npz',
+        )
+        self.input_custom_dataset_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-custom-dataset.npz',
+        )
 
-        self.input_3dkeypoint_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', '3d', f'{self.file_id}.mp4.npy')
-        self.input_3dkeypoint_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '3d', f'{self.file_id}.mp4.npy')
+        self.input_3dkeypoint_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            '3d',
+            f'{self.file_id}.mp4.npy',
+        )
+        self.input_3dkeypoint_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            '3d',
+            f'{self.file_id}.mp4.npy',
+        )
 
-        self.input_raw_turn_time_prediction_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
-        self.input_raw_turn_time_prediction_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
-        
+        self.input_raw_turn_time_prediction_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-tt.pickle',
+        )
+        self.input_raw_turn_time_prediction_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-tt.pickle',
+        )
+
     def fetch_data(self):
         self.update_state(state='PROGRESS', meta={'progress': 0, 'stage': 'fetching data'})
         self.data_synchronizer.download(
@@ -94,7 +125,7 @@ class DepthEstimationTaskRunner(Runner):
             turn_time_mask_path=self.input_raw_turn_time_prediction_path_local,
             device='cpu',
         )
-        
+
         if self.result_hook is not None:
             self.result_hook['final_output'] = final_output
             self.result_hook['gait_parameters'] = gait_parameters

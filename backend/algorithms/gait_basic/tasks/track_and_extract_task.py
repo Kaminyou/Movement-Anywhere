@@ -1,17 +1,15 @@
-import typing as t
 import os
-import shutil
 import pickle
+import shutil
+import typing as t
 
 from celery import Celery
 from redis import Redis
 
 from algorithms._runner import Runner
 from algorithms.gait_basic.utils.docker_utils import run_container
-from algorithms.gait_basic.utils.track import (
-    find_continuous_personal_bbox, load_mot_file
-)
 from algorithms.gait_basic.utils.make_video import count_frames
+from algorithms.gait_basic.utils.track import find_continuous_personal_bbox, load_mot_file
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
 
@@ -65,35 +63,104 @@ class TrackAndExtractTaskRunner(Runner):
         self.update_state = update_state
 
         # input
-        self.input_mp4_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'input', f'{self.file_id}.mp4')
-        self.input_mp4_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'input', f'{self.file_id}.mp4')
+        self.input_mp4_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'input',
+            f'{self.file_id}.mp4',
+        )
+        self.input_mp4_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'input',
+            f'{self.file_id}.mp4',
+        )
 
         # meta
-        self.meta_mp4_folder_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'video')
-        self.meta_mp4_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'video', f'{self.file_id}.mp4')
-        
+        self.meta_mp4_folder_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'video',
+        )
+        self.meta_mp4_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'video',
+            f'{self.file_id}.mp4',
+        )
+
         # output
-        self.output_mot_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}.mot.txt')
-        self.output_mot_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}.mot.txt')
+        self.output_mot_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}.mot.txt',
+        )
+        self.output_mot_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}.mot.txt',
+        )
 
-        self.output_targeted_person_bboxes_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-target_person_bboxes.pickle')  # noqa
-        self.output_targeted_person_bboxes_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-target_person_bboxes.pickle')  # noqa
+        self.output_targeted_person_bboxes_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-target_person_bboxes.pickle',
+        )
+        self.output_targeted_person_bboxes_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-target_person_bboxes.pickle',
+        )
 
-        self.output_2dkeypoint_folder_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '2d')
-        self.output_2dkeypoint_folder_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', '2d')
+        self.output_2dkeypoint_folder_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            '2d',
+        )
+        self.output_2dkeypoint_folder_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            '2d',
+        )
 
-        self.output_3dkeypoint_folder_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '3d')
-        self.output_3dkeypoint_folder_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', '3d')
+        self.output_3dkeypoint_folder_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            '3d',
+        )
+        self.output_3dkeypoint_folder_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            '3d',
+        )
 
-        self.output_custom_dataset_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
-        self.output_custom_dataset_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-custom-dataset.npz')  # noqa
+        self.output_custom_dataset_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-custom-dataset.npz',
+        )
+        self.output_custom_dataset_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-custom-dataset.npz',
+        )
 
         if self.output_2dkeypoint_folder_local[-1] != '/':
             self.output_2dkeypoint_folder_local += '/'
 
         if self.output_2dkeypoint_folder_remote[-1] != '/':
             self.output_2dkeypoint_folder_remote += '/'
-        
+
         if self.output_3dkeypoint_folder_local[-1] != '/':
             self.output_3dkeypoint_folder_local += '/'
 
@@ -156,10 +223,18 @@ class TrackAndExtractTaskRunner(Runner):
             ],
         )
 
-        os.makedirs(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out'), exist_ok=True)
-        os.makedirs(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '2d'), exist_ok=True)
-        os.makedirs(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '3d'), exist_ok=True)
-        os.makedirs(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'video'), exist_ok=True)
+        os.makedirs(
+            os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out'), exist_ok=True,
+        )
+        os.makedirs(
+            os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '2d'), exist_ok=True,
+        )
+        os.makedirs(
+            os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '3d'), exist_ok=True,
+        )
+        os.makedirs(
+            os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'video'), exist_ok=True,
+        )
 
         mot_dict = load_mot_file(self.output_mot_path_local)
         count = count_frames(self.input_mp4_path_local)

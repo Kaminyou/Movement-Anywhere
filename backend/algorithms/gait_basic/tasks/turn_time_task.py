@@ -1,16 +1,15 @@
-import typing as t
 import os
-import shutil
 import pickle
+import shutil
+import typing as t
 
 from celery import Celery
 from redis import Redis
 
 from algorithms._runner import Runner
+from algorithms.gait_basic.gait_study_semi_turn_time.inference import turn_time_simple_inference
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
-
-from algorithms.gait_basic.gait_study_semi_turn_time.inference import turn_time_simple_inference
 
 
 SYNC_FILE_SERVER_URL = os.environ['SYNC_FILE_SERVER_URL']
@@ -57,12 +56,34 @@ class TurnTimeTaskRunner(Runner):
         self.result_hook = result_hook
 
         # input
-        self.input_3dkeypoint_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', '3d', f'{self.file_id}.mp4.npy')
-        self.input_3dkeypoint_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', '3d', f'{self.file_id}.mp4.npy')
+        self.input_3dkeypoint_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            '3d',
+            f'{self.file_id}.mp4.npy',
+        )
+        self.input_3dkeypoint_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            '3d',
+            f'{self.file_id}.mp4.npy',
+        )
 
         # output
-        self.output_raw_turn_time_prediction_path_local = os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
-        self.output_raw_turn_time_prediction_path_remote = os.path.join(SYNC_FILE_SERVER_RESULT_PATH, self.submit_uuid, 'out', f'{self.file_id}-tt.pickle')  # noqa
+        self.output_raw_turn_time_prediction_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-tt.pickle',
+        )
+        self.output_raw_turn_time_prediction_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-tt.pickle',
+        )
 
     def fetch_data(self):
         self.update_state(state='PROGRESS', meta={'progress': 0, 'stage': 'fetching data'})
@@ -87,7 +108,7 @@ class TurnTimeTaskRunner(Runner):
 
         with open(self.output_raw_turn_time_prediction_path_local, 'wb') as handle:
             pickle.dump(raw_tt_prediction, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        
+
         if self.result_hook is not None:
             self.result_hook['tt'] = tt
 
