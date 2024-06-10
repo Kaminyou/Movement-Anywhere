@@ -30,7 +30,7 @@
     ./backend/algorithms/gait_basic/depth_alg/weights/gait-depth-weight.pth
     ```
 5. Execute
-    ```
+    ```bash
     $ docker-compose up --build -d
     ```
 
@@ -41,14 +41,14 @@ We provide a specific enviroment for developement. Please execute the following 
 $ docker-compose -f docker-compose-dev.yml up --build -d
 ```
 Then, you can access `frontend` by
-```
+```bash
 $ docker exec -it gait-anywhere-frontend-dev bash
 # in the container
 $ yarn start
 ```
 
 You can access `backend` by
-```
+```bash
 $ docker exec -it gait-anywhere-backend-dev bash
 # in the container
 $ python3 app.py
@@ -56,7 +56,8 @@ $ python3 app.py
 
 ### Integration test
 Please set up all services according to the previous section, then
-```
+```bash
+$ ./test_integration_setup.sh  # download test data
 $ docker exec -it gait-anywhere-test_env bash
 # in the container
 $ pytest -vvv -s --integration .
