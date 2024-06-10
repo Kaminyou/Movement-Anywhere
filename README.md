@@ -6,7 +6,8 @@
 ## System design (Microservice architecture)
 ![image](./misc/pathoopengait-system.png)
 
-## Get started
+## Deployment
+### Get started
 1. Please execute `setup.sh` to download pretrained weights for several deep learning models. It will also check if all required docker images exist or not.
     ```
     $ ./setup.sh
@@ -32,8 +33,39 @@
     ```
     $ docker-compose up --build -d
     ```
-## Customized
-### Add new algorithms (models) or new data type
+
+## Development Guide
+### Get started
+We provide a specific enviroment for developement. Please execute the following command after completing steps 1-4 in the previous section.
+```
+$ docker-compose -f docker-compose-dev.yml up --build -d
+```
+Then, you can access `frontend` by
+```
+$ docker exec -it gait-anywhere-frontend-dev bash
+# in the container
+$ yarn start
+```
+
+You can access `backend` by
+```
+$ docker exec -it gait-anywhere-backend-dev bash
+# in the container
+$ python3 app.py
+```
+
+### Integration test
+Please set up all services according to the previous section, then
+```
+$ docker exec -it gait-anywhere-test_env bash
+# in the container
+$ pytest -vvv -s --integration .
+```
+Please note that the test script will not automatically delete anything created during the integration test (so as to enable debugging).
+Before you set up the production services, please double check if you did clean up the database and the folder to store the files (at `SYNC_FILE_SERVER_STORE_PATH` in `.env`)
+
+### Customized
+#### Add new algorithms (models) or new data type
 1. Please create a folder: `backend/algorithms/<YOUR_ALGORITHM_NAME>`.
 2. Your folder should have a `__init__.py` and `main` files.
 3. In `main.py`, add `from .._analyzer import Analyzer`.
