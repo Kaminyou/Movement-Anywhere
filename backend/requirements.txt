@@ -18,3 +18,5 @@ celery==5.2.7
 flower==1.2.0
 redis==4.1.4
 opencv-python==4.8.0.74
+requests==2.31.0
+chardet==5.2.0
