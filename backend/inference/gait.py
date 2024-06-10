@@ -28,6 +28,7 @@ def inference_gait(
         raise ValueError(f'dataType={dataType} and modelName={modelName} not exist')
 
     results = analyzer.run(
+        submit_uuid=submitUUID,
         data_root_dir=os.path.join('/data/', submitUUID),
         file_id=trial_id,
         height=height,

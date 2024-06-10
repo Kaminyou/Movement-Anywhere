@@ -22,6 +22,7 @@
     SYNC_FILE_SERVER_STORE_PATH=... # find somewhere large enough to save the results
     SYNC_FILE_SERVER_USER=...
     SYNC_FILE_SERVER_PASSWORD=...
+    FOLDER_TO_STORE_TEMP_FILE_PATH=... # find somewhere large enough to save the temp files
     ```
 4. Please make sure the model weights are present in the following path
     ```

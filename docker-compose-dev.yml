@@ -7,6 +7,29 @@ x-common-variables: &common-variables
   SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
   BACKEND_FOLDER_PATH: ${PWD}/backend
   SYNC_FILE_SERVER_STORE_PATH: ${SYNC_FILE_SERVER_STORE_PATH}
+  SYNC_FILE_SERVER_URL: 'http://file_server/'
+  SYNC_FILE_SERVER_PORT: '5000'
+  SYNC_FILE_SERVER_USER: ${SYNC_FILE_SERVER_USER}
+  SYNC_FILE_SERVER_PASSWORD: ${SYNC_FILE_SERVER_PASSWORD}
+  FOLDER_TO_STORE_TEMP_FILE_PATH: ${FOLDER_TO_STORE_TEMP_FILE_PATH}
+  DOCKER_NETWORK: 'gait_anywhere_network'
+
+x-dind-worker-settings: &common-dind-worker-settings
+  image: gait-anywhere-backend:latest
+  working_dir: /root/backend
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - capabilities: [gpu]
+  stdin_open: true
+  tty: true
+  volumes:
+    - ${PWD}/backend:/root/backend
+    - ${FOLDER_TO_STORE_TEMP_FILE_PATH}:/root/data
+    - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock
+  networks:
+    - gait_anywhere_network
 
 services:
   frontend:
@@ -141,6 +164,46 @@ services:
     working_dir: /root/gait-anywhere
     networks:
       - gait_anywhere_network
+
+  track_and_extract-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-track_and_extract-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.track_and_extract_task worker -Q track_and_extract_task_queue -n track_and_extract-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/track_and_extract-worker1.log
+  
+  turn_time-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-turn_time-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.turn_time_task worker -Q turn_time_task_queue -n turn_time-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/turn_time-worker1.log
+
+  depth_estimation-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-depth_estimation-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.depth_estimation_task worker -Q depth_estimation_task_queue -n depth_estimation-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/depth_estimation-worker1.log
+
+  video_generation-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-video_generation-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.video_generation_task worker -Q video_generation_task_queue -n video_generation-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/video_generation-worker1.log
 
 networks:
   gait_anywhere_network:

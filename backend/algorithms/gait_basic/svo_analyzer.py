@@ -40,6 +40,7 @@ class SVOGaitAnalyzer(Analyzer):
 
     def run(
         self,
+        submit_uuid: str,
         data_root_dir: str,
         file_id: str,
         **kwargs,
