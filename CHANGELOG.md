@@ -1,7 +1,12 @@
 # Changelog
+## v0.8.2
+### Improvements
+- Linting for `backend/algorithms/gait_basic/video2d_analyzer.py`
+
+
 ## v0.8.1
 ### Improvements
-- Improve `algorithms.gait_basic.utils.make_video.count_frames`
+- Improve backend `algorithms.gait_basic.utils.make_video.count_frames`
 - Make the `depth_estimation` and `video_generation` steps in 2D algorithm run in parallel
 
 
