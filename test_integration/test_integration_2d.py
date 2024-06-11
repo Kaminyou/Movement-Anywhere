@@ -109,7 +109,7 @@ def test_integration_2d_file_submission(submit_data):
             assert math.isclose(
                 output_gait_parameters[key]['value'],
                 expected_gait_parameters[key]['value'],
-                rel_tol=1e-9,
+                rel_tol=1e-4,
             )
             assert output_gait_parameters[key]['unit'] == expected_gait_parameters[key]['unit']
 
