@@ -1,5 +1,4 @@
 import os
-import pickle
 import shutil
 import typing as t
 
@@ -8,10 +7,9 @@ from redis import Redis
 
 from algorithms._runner import Runner
 from algorithms.gait_basic.utils.docker_utils import run_container
-from algorithms.gait_basic.utils.make_video import count_frames
-from algorithms.gait_basic.utils.track import find_continuous_personal_bbox, load_mot_file
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
+
 
 SVO_EXPORT_RETRY = 2
 

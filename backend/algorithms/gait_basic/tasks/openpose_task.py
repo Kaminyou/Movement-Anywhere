@@ -1,5 +1,4 @@
 import os
-import pickle
 import shutil
 import typing as t
 
@@ -8,8 +7,6 @@ from redis import Redis
 
 from algorithms._runner import Runner
 from algorithms.gait_basic.utils.docker_utils import run_container
-from algorithms.gait_basic.utils.make_video import count_frames
-from algorithms.gait_basic.utils.track import find_continuous_personal_bbox, load_mot_file
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
 
@@ -134,7 +131,7 @@ class OpenposeTask(Runner):
             image='openpose-env:latest',
             command=(
                 f'./build/examples/openpose/openpose.bin '
-                f'--video {self.input_avi_path_local} --write-video {self.output_keypoints_avi_path_local} '
+                f'--video {self.input_avi_path_local} --write-video {self.output_keypoints_avi_path_local} '  # noqa
                 f'--write-json {self.output_json_folder_local} --frame_rotate 270 --camera_resolution 1920x1080 '  # noqa
                 f'--display 0'
             ),
