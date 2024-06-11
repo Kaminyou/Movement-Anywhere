@@ -1,4 +1,10 @@
 # Changelog
+## v0.8.1
+### Improvements
+- Improve `algorithms.gait_basic.utils.make_video.count_frames`
+- Make the `depth_estimation` and `video_generation` steps in 2D algorithm run in parallel
+
+
 ## v0.8.0
 ### New features
 - Implement distributed inference for the 2D algorithm
@@ -52,7 +58,7 @@
 - Add depth pre-trained model auto-downloading in `setup.sh`
 
 ### Improvements
-- Improve CUDA_VISIBLE_DEVICES` settings
+- Improve `CUDA_VISIBLE_DEVICES` settings
 - Improve `container run` client settings
 - Improve the naming of model weights
 - Enable `setup.sh` to check if all the required docker images exist or not
