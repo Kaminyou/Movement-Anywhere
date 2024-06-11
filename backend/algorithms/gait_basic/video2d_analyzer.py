@@ -94,6 +94,7 @@ class Video2DGaitAnalyzer(Analyzer):
             except TimeoutError:
                 print('Timeout!')
 
+        # (depth estimation and gait parameters) + (video generation) at the sane time
         # depth estimation and gait parameters
         final_output = {}
         gait_parameters = []
@@ -108,7 +109,16 @@ class Video2DGaitAnalyzer(Analyzer):
             submit_uuid,
             depth_estimation_config,
         )
-        while not depth_estimation_task_instance.ready():
+
+        # video generation
+        video_generation_config = {
+            'file_id': file_id,
+        }
+        video_generation_task_instance = video_generation_task.delay(
+            submit_uuid,
+            video_generation_config,
+        )
+        while not depth_estimation_task_instance.ready() or not video_generation_task_instance.ready():
             time.sleep(3)
 
         if depth_estimation_task_instance.failed():
@@ -124,17 +134,6 @@ class Video2DGaitAnalyzer(Analyzer):
                 )
             except TimeoutError:
                 print('Timeout!')
-
-        # video generation
-        video_generation_config = {
-            'file_id': file_id,
-        }
-        video_generation_task_instance = video_generation_task.delay(
-            submit_uuid,
-            video_generation_config,
-        )
-        while not video_generation_task_instance.ready():
-            time.sleep(3)
 
         if video_generation_task_instance.failed():
             raise RuntimeError('Video Generation Task falied!')
