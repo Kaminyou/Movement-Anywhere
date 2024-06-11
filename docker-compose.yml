@@ -199,6 +199,16 @@ services:
       CUDA_VISIBLE_DEVICES: '0'
     command: celery --app algorithms.gait_basic.tasks.openpose_task worker -Q openpose_task_queue -n openpose-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/openpose-worker1.log
 
+  svo_depth_sensing-worker1:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-svo_depth_sensing-worker1
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'
+    command: celery --app algorithms.gait_basic.tasks.svo_depth_sensing_task worker -Q svo_depth_sensing_task_queue -n svo_depth_sensing-worker1@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/svo_depth_sensing-worker1.log
+
 networks:
   gait_anywhere_network:
     name: gait_anywhere_network
