@@ -1,4 +1,9 @@
 # Changelog
+## v0.8.3
+### Improvements
+- Make 2D integration test less strict considering precisions of different GPU fp 
+
+
 ## v0.8.2
 ### Improvements
 - Linting for `backend/algorithms/gait_basic/video2d_analyzer.py`
