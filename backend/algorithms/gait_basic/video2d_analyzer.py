@@ -118,7 +118,7 @@ class Video2DGaitAnalyzer(Analyzer):
             submit_uuid,
             video_generation_config,
         )
-        while not depth_estimation_task_instance.ready() or not video_generation_task_instance.ready():
+        while not depth_estimation_task_instance.ready() or not video_generation_task_instance.ready():  # noqa
             time.sleep(3)
 
         if depth_estimation_task_instance.failed():
