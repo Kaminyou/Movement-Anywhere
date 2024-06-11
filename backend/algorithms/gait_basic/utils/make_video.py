@@ -19,10 +19,9 @@ def get_frames(video_path: str):
 
 
 def count_frames(video_path: str) -> int:
-    frames = []
-    for frame in get_frames(video_path):
-        frames.append(frame)
-    return len(frames)
+    cap = cv2.VideoCapture(video_path)
+    length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    return length
 
 
 def render(data_root_dir: str):
