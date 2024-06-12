@@ -1,4 +1,16 @@
 # Changelog
+## v0.8.5
+### New features
+- Fully implement distributed inference for the 3D algorithm
+- Main worker now can accept multiple tasks
+
+### Improvements
+- Update pytest default settings
+
+### Fix bugs
+- Fix folder uploading in the synchronizer
+
+
 ## v0.8.4
 ### New features
 - Partially implement distributed inference for the 3D algorithm
