@@ -1,5 +1,4 @@
 import os
-import pickle
 import shutil
 import typing as t
 
@@ -129,7 +128,12 @@ class REstimationTaskRunner(Runner):
         shutil.copytree('algorithms/gait_basic/zGait/', self.output_zgait_folder_local)
         shutil.copyfile(
             self.input_csv_path_local,
-            os.path.join(self.output_zgait_folder_local, 'input', '2001-01-01-1', '2001-01-01-1-1.csv'),
+            os.path.join(
+                self.output_zgait_folder_local,
+                'input',
+                '2001-01-01-1',
+                '2001-01-01-1-1.csv',
+            ),
         )
         os.system(f'cd {self.output_zgait_folder_local} && Rscript gait_batch.R input/20010101.csv')
         shutil.copyfile(

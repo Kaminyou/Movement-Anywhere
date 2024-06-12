@@ -16,16 +16,10 @@ DEPTH_SENSING_RETRY = 5
 SYNC_FILE_SERVER_STORE_PATH = os.environ['SYNC_FILE_SERVER_STORE_PATH']
 
 if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
-
-    import docker
-
     from .tasks.depth_estimation_task import depth_estimation_task
     from .tasks.track_and_extract_task import track_and_extract_task
     from .tasks.turn_time_task import turn_time_task
     from .tasks.video_generation_task import video_generation_task
-
-    CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
-    client = docker.from_env(timeout=120)
 
 
 class Video2DGaitAnalyzer(Analyzer):

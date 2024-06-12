@@ -1,16 +1,12 @@
 import os
 import pickle
-import shutil
 import time
 import typing as t
 
-import pandas as pd
 from celery.result import allow_join_result
 
 from .._analyzer import Analyzer
-from .utils.calculate import add_newline_if_missing, avg, fix_timestamp_file, replace_in_filenames
-from .utils.docker_utils import run_container
-from .utils.make_video import new_render
+from .utils.calculate import add_newline_if_missing, fix_timestamp_file
 from .utils.track import (
     remove_non_target_person, set_zero_prob_for_keypoint_before_start_line,
 )
@@ -24,9 +20,6 @@ DEPTH_SENSING_RETRY = 5
 SYNC_FILE_SERVER_STORE_PATH = os.environ['SYNC_FILE_SERVER_STORE_PATH']
 
 if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
-
-    import docker
-
     from .tasks.openpose_task import openpose_task
     from .tasks.svo_conversion_task import svo_conversion_task
     from .tasks.svo_depth_sensing_task import svo_depth_sensing_task
@@ -34,9 +27,6 @@ if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
     from .tasks.turn_time_task import turn_time_task
     from .tasks.r_estimation_task import r_estimation_task
     from .tasks.video_generation_3d_task import video_generation_3d_task
-
-    CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
-    client = docker.from_env(timeout=120)
 
 
 class SVOGaitAnalyzer(Analyzer):
@@ -192,7 +182,7 @@ class SVOGaitAnalyzer(Analyzer):
 
         if r_estimation_instance.failed():
             raise RuntimeError('R estimation falied!')
-        
+
         sl = -1
         sw = -1
         st = -1
