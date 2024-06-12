@@ -11,7 +11,7 @@ from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
 
 
-SVO_EXPORT_RETRY = 2
+SVO_EXPORT_RETRY = 5
 
 SYNC_FILE_SERVER_URL = os.environ['SYNC_FILE_SERVER_URL']
 SYNC_FILE_SERVER_PORT = os.environ['SYNC_FILE_SERVER_PORT']
@@ -147,6 +147,9 @@ class SVOConversionTask(Runner):
             )
             retry += 1
             success = os.path.exists(self.output_avi_path_local)
+
+        if not success:
+            raise RuntimeError(f'SVO conversion failed in {retry} times')
 
         # avi to mp4 (rotate 90 clockwisely)
         run_container(

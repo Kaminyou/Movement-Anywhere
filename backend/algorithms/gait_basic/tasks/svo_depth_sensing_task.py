@@ -174,6 +174,9 @@ class SVODepthSensingTask(Runner):
             retry += 1
             success = os.path.exists(self.output_csv_path_local)
 
+        if not success:
+            raise RuntimeError(f'SVO depth sensing failed in {retry} times')
+
     def clear(self):
         shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid))
 
