@@ -1,4 +1,9 @@
 # Changelog
+## v0.8.4
+### New features
+- Partially implement distributed inference for the 3D algorithm
+
+
 ## v0.8.3
 ### Improvements
 - Make 2D integration test less strict considering precisions of different GPU fp 
