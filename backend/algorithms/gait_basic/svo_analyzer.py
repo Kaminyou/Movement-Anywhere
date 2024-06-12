@@ -133,7 +133,39 @@ class SVOGaitAnalyzer(Analyzer):
         # step 6: fix timestemp
         fix_timestamp_file(timestamp_file_path=source_txt_path, json_path=meta_json_path)
 
-        # step 7: svo depth sensing
+        # step 7: turn time
+        turn_time_config = {
+            'file_id': file_id,
+            'turn_time_pretrained_path': self.turn_time_pretrained_path,
+        }
+        turn_time_task_instance = turn_time_task.delay(
+            submit_uuid,
+            turn_time_config,
+        )
+        while not turn_time_task_instance.ready():
+            time.sleep(3)
+
+        if turn_time_task_instance.failed():
+            raise RuntimeError('Turn Time Task falied!')
+
+        tt = -1
+        with allow_join_result():
+            try:
+                tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
+            except TimeoutError:
+                print('Timeout!')
+
+        # step 8: generate videos
+        video_generation_3d_config = {
+            'file_id': file_id,
+        }
+        video_generation_3d_task_instance = video_generation_3d_task.delay(
+            submit_uuid,
+            video_generation_3d_config,
+        )
+        # since video generation takes time; collect after steps 9 and 10
+
+        # step 9: svo depth sensing
         svo_depth_sensing_config = {
             'file_id': file_id,
         }
@@ -147,7 +179,7 @@ class SVOGaitAnalyzer(Analyzer):
         if svo_depth_sensing_instance.failed():
             raise RuntimeError('SVO Depth Sensing Task falied!')
 
-        # step 8: run R to get gait parameters
+        # step 10: run R to get gait parameters
         r_estimation_config = {
             'file_id': file_id,
         }
@@ -177,36 +209,7 @@ class SVOGaitAnalyzer(Analyzer):
             except TimeoutError:
                 print('Timeout!')
 
-        # step 9: turn time
-        turn_time_config = {
-            'file_id': file_id,
-            'turn_time_pretrained_path': self.turn_time_pretrained_path,
-        }
-        turn_time_task_instance = turn_time_task.delay(
-            submit_uuid,
-            turn_time_config,
-        )
-        while not turn_time_task_instance.ready():
-            time.sleep(3)
-
-        if turn_time_task_instance.failed():
-            raise RuntimeError('Turn Time Task falied!')
-
-        tt = -1
-        with allow_join_result():
-            try:
-                tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
-            except TimeoutError:
-                print('Timeout!')
-
-        # step 10: generate videos
-        video_generation_3d_config = {
-            'file_id': file_id,
-        }
-        video_generation_3d_task_instance = video_generation_3d_task.delay(
-            submit_uuid,
-            video_generation_3d_config,
-        )
+        # check video generation
         while not video_generation_3d_task_instance.ready():
             time.sleep(3)
 
