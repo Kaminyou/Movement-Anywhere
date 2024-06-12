@@ -5,7 +5,7 @@ import typing as t
 
 from celery.result import allow_join_result
 
-from .._analyzer import Analyzer
+from algorithms._analyzer import Analyzer
 
 
 BACKEND_FOLDER_PATH = os.environ['BACKEND_FOLDER_PATH']
@@ -45,6 +45,9 @@ class Video2DGaitAnalyzer(Analyzer):
         focal_length: float,
     ) -> t.List[t.Dict[str, t.Any]]:
 
+        def on_msg(*args, **kwargs):
+            print(f'on_msg: {args}, {kwargs}')
+
         os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
@@ -82,8 +85,6 @@ class Video2DGaitAnalyzer(Analyzer):
 
         tt = -1
         with allow_join_result():
-            def on_msg(*args, **kwargs):
-                print(f'on_msg: {args}, {kwargs}')
             try:
                 tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
             except TimeoutError:
@@ -120,8 +121,6 @@ class Video2DGaitAnalyzer(Analyzer):
             raise RuntimeError('Depth Estimation Task falied!')
 
         with allow_join_result():
-            def on_msg(*args, **kwargs):
-                print(f'on_msg: {args}, {kwargs}')
             try:
                 final_output, gait_parameters = depth_estimation_task_instance.get(
                     on_message=on_msg,

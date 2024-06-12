@@ -5,9 +5,9 @@ import typing as t
 
 from celery.result import allow_join_result
 
-from .._analyzer import Analyzer
-from .utils.calculate import add_newline_if_missing, fix_timestamp_file
-from .utils.track import (
+from algorithms._analyzer import Analyzer
+from algorithms.gait_basic.utils.calculate import add_newline_if_missing, fix_timestamp_file
+from algorithms.gait_basic.utils.track import (
     remove_non_target_person, set_zero_prob_for_keypoint_before_start_line,
 )
 
