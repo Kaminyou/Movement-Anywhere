@@ -32,6 +32,7 @@ if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
     from .tasks.svo_depth_sensing_task import svo_depth_sensing_task
     from .tasks.track_and_extract_task import track_and_extract_task
     from .tasks.turn_time_task import turn_time_task
+    from .tasks.r_estimation_task import r_estimation_task
 
     CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
     client = docker.from_env(timeout=120)
@@ -53,6 +54,9 @@ class SVOGaitAnalyzer(Analyzer):
         **kwargs,
     ) -> t.List[t.Dict[str, t.Any]]:
 
+        def on_msg(*args, **kwargs):
+            print(f'on_msg: {args}, {kwargs}')
+
         os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
@@ -64,7 +68,6 @@ class SVOGaitAnalyzer(Analyzer):
         # meta output
         meta_mp4_path = os.path.join(data_root_dir, 'input', f'{file_id}.mp4')
         meta_json_path = os.path.join(data_root_dir, 'out', f'{file_id}-json/')
-        meta_csv_path = os.path.join(data_root_dir, 'out', f'{file_id}-raw.csv')
 
         # meta output (for non-target person removing)
         meta_rendered_mp4_path = os.path.join(data_root_dir, 'out', f'{file_id}-rendered.mp4')
@@ -72,7 +75,6 @@ class SVOGaitAnalyzer(Analyzer):
 
         # output
         source_mp4_path = os.path.join(data_root_dir, 'video', f'{file_id}.mp4')
-        output_csv = os.path.join(data_root_dir, 'out', f'{file_id}.csv')
         meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')  # noqa
         output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')  # noqa
         output_shown_mp4_path = os.path.join(data_root_dir, 'out', 'render.mp4')
@@ -140,6 +142,76 @@ class SVOGaitAnalyzer(Analyzer):
             start_line=START_LINE,
         )
 
+        # step 8: fix timestemp
+        fix_timestamp_file(timestamp_file_path=source_txt_path, json_path=meta_json_path)
+
+        # step 9: svo depth sensing
+        svo_depth_sensing_config = {
+            'file_id': file_id,
+        }
+        svo_depth_sensing_instance = svo_depth_sensing_task.delay(
+            submit_uuid,
+            svo_depth_sensing_config,
+        )
+        while not svo_depth_sensing_instance.ready():
+            time.sleep(3)
+
+        if svo_depth_sensing_instance.failed():
+            raise RuntimeError('SVO Depth Sensing Task falied!')
+
+        # step 10: run R to get gait parameters
+        r_estimation_config = {
+            'file_id': file_id,
+        }
+        r_estimation_instance = r_estimation_task.delay(
+            submit_uuid,
+            r_estimation_config,
+        )
+        while not r_estimation_instance.ready():
+            time.sleep(3)
+
+        if r_estimation_instance.failed():
+            raise RuntimeError('R estimation falied!')
+        
+        sl = -1
+        sw = -1
+        st = -1
+        cadence = -1
+        velocity = -1
+        with allow_join_result():
+            try:
+                gait_parameters = r_estimation_instance.get(on_message=on_msg, timeout=10)
+                sl = gait_parameters['sl']
+                sw = gait_parameters['sw']
+                st = gait_parameters['st']
+                cadence = gait_parameters['cadence']
+                velocity = gait_parameters['velocity']
+            except TimeoutError:
+                print('Timeout!')
+
+        # step 11: turn time
+        turn_time_config = {
+            'file_id': file_id,
+            'turn_time_pretrained_path': self.turn_time_pretrained_path,
+        }
+        turn_time_task_instance = turn_time_task.delay(
+            submit_uuid,
+            turn_time_config,
+        )
+        while not turn_time_task_instance.ready():
+            time.sleep(3)
+
+        if turn_time_task_instance.failed():
+            raise RuntimeError('Turn Time Task falied!')
+
+        tt = -1
+        with allow_join_result():
+            try:
+                tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
+            except TimeoutError:
+                print('Timeout!')
+
+        # step 13: generate videos
         # step 6: render_removed_result
         run_container(
             client=client,
@@ -187,95 +259,6 @@ class SVOGaitAnalyzer(Analyzer):
             ],
         )
 
-        # step 8: fix timestemp
-        fix_timestamp_file(timestamp_file_path=source_txt_path, json_path=meta_json_path)
-
-        # step 9: svo depth sensing
-        svo_depth_sensing_config = {
-            'file_id': file_id,
-        }
-        svo_depth_sensing_instance = svo_depth_sensing_task.delay(
-            submit_uuid,
-            svo_depth_sensing_config,
-        )
-        while not svo_depth_sensing_instance.ready():
-            time.sleep(3)
-
-        if svo_depth_sensing_instance.failed():
-            raise RuntimeError('SVO Depth Sensing Task falied!')
-
-        # step 10: run R to get gait parameters
-        try:
-            gait_folder_path = os.path.join(data_root_dir, 'out', 'zGait')
-            shutil.copytree('algorithms/gait_basic/zGait/', gait_folder_path)
-            shutil.copyfile(
-                meta_csv_path,
-                os.path.join(gait_folder_path, 'input', '2001-01-01-1', '2001-01-01-1-1.csv'),
-            )
-            os.system(f'cd {gait_folder_path} && Rscript gait_batch.R input/20010101.csv')
-            shutil.copyfile(
-                os.path.join(gait_folder_path, 'output/2001-01-01-1/2001-01-01-1.csv'),
-                output_csv,
-            )
-            replace_in_filenames(gait_folder_path, '2001-01-01-1', file_id)
-        except Exception as e:
-            print(e, 'No 3D csv')
-
-        # step 11: turn time
-        turn_time_config = {
-            'file_id': file_id,
-            'turn_time_pretrained_path': self.turn_time_pretrained_path,
-        }
-        turn_time_task_instance = turn_time_task.delay(
-            submit_uuid,
-            turn_time_config,
-        )
-        while not turn_time_task_instance.ready():
-            time.sleep(3)
-
-        if turn_time_task_instance.failed():
-            raise RuntimeError('Turn Time Task falied!')
-
-        tt = -1
-        with allow_join_result():
-            def on_msg(*args, **kwargs):
-                print(f'on_msg: {args}, {kwargs}')
-            try:
-                tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
-            except TimeoutError:
-                print('Timeout!')
-
-        # step 12: finalize
-        sl = -1
-        sw = -1
-        st = -1
-        cadence = -1
-        velocity = -1
-
-        try:
-            df = pd.read_csv(output_csv, index_col=0)
-
-            table = df.T['total'].T
-
-            left_n = table['left.size']
-            right_n = table['right.size']
-            left_sl = table['left.stride.lt.mu']
-            right_sl = table['right.stride.lt.mu']
-            left_sw = table['left.stride.wt.mu']
-            right_sw = table['right.stride.wt.mu']
-            left_st = table['left.stride.t.mu']
-            right_st = table['right.stride.t.mu']
-            # tt = table['turn.t']
-            cadence = table['cadence']
-            velocity = table['velocity']
-
-            sl = avg(left_sl, right_sl, left_n, right_n)
-            sw = avg(left_sw, right_sw, left_n, right_n)
-            st = avg(left_st, right_st, left_n, right_n)
-        except Exception as e:
-            print(e)
-
-        # step 13: generate videos
         try:
             # (openpose + box) + turning; (openpose + box) is on video_path
             output_shown_mp4_path_temp = output_shown_mp4_path + '.tmp.mp4'
