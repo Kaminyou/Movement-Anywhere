@@ -92,10 +92,10 @@ services:
     networks:
       - gait_anywhere_network
 
-  worker:
+  main-worker:
     image: gait-anywhere-backend:latest
-    container_name: gait-anywhere-worker
-    command: celery --app inference.tasks worker -P solo --loglevel=info --logfile=inference/logs/celery.log
+    container_name: gait-anywhere-main-worker
+    command: celery --app inference.tasks worker -Q inference_gait_task_queue -n main-worker@%h -c 2 --without-heartbeat --loglevel=info --logfile=inference/logs/main-worker.log
     volumes:
       - ./backend:/root/backend
       - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock
