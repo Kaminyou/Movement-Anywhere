@@ -83,6 +83,8 @@ class DataSynchronizer:
 
         file_paths = glob.glob(os.path.join(src_folder, '**/*'), recursive=True)
         for file_path in file_paths:
+            if os.path.isdir(file_path):
+                continue
             sub_file_path = file_path.replace(src_folder, '', 1)
             des_file_path = os.path.join(des_folder, sub_file_path)
             is_success = self.upload(file_path, des_file_path)

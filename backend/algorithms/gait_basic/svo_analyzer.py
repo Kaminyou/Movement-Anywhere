@@ -1,16 +1,12 @@
 import os
 import pickle
-import shutil
 import time
 import typing as t
 
-import pandas as pd
 from celery.result import allow_join_result
 
 from .._analyzer import Analyzer
-from .utils.calculate import add_newline_if_missing, avg, fix_timestamp_file, replace_in_filenames
-from .utils.docker_utils import run_container
-from .utils.make_video import new_render
+from .utils.calculate import add_newline_if_missing, fix_timestamp_file
 from .utils.track import (
     remove_non_target_person, set_zero_prob_for_keypoint_before_start_line,
 )
@@ -24,17 +20,13 @@ DEPTH_SENSING_RETRY = 5
 SYNC_FILE_SERVER_STORE_PATH = os.environ['SYNC_FILE_SERVER_STORE_PATH']
 
 if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
-
-    import docker
-
     from .tasks.openpose_task import openpose_task
     from .tasks.svo_conversion_task import svo_conversion_task
     from .tasks.svo_depth_sensing_task import svo_depth_sensing_task
     from .tasks.track_and_extract_task import track_and_extract_task
     from .tasks.turn_time_task import turn_time_task
-
-    CUDA_VISIBLE_DEVICES = os.environ['CUDA_VISIBLE_DEVICES']
-    client = docker.from_env(timeout=120)
+    from .tasks.r_estimation_task import r_estimation_task
+    from .tasks.video_generation_3d_task import video_generation_3d_task
 
 
 class SVOGaitAnalyzer(Analyzer):
@@ -53,6 +45,9 @@ class SVOGaitAnalyzer(Analyzer):
         **kwargs,
     ) -> t.List[t.Dict[str, t.Any]]:
 
+        def on_msg(*args, **kwargs):
+            print(f'on_msg: {args}, {kwargs}')
+
         os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
@@ -62,25 +57,10 @@ class SVOGaitAnalyzer(Analyzer):
         source_txt_path = os.path.join(data_root_dir, 'input', f'{file_id}.txt')
 
         # meta output
-        meta_mp4_path = os.path.join(data_root_dir, 'input', f'{file_id}.mp4')
         meta_json_path = os.path.join(data_root_dir, 'out', f'{file_id}-json/')
-        meta_csv_path = os.path.join(data_root_dir, 'out', f'{file_id}-raw.csv')
 
         # meta output (for non-target person removing)
-        meta_rendered_mp4_path = os.path.join(data_root_dir, 'out', f'{file_id}-rendered.mp4')
         meta_targeted_person_bboxes_path = os.path.join(data_root_dir, 'out', f'{file_id}-target_person_bboxes.pickle')  # noqa
-
-        # output
-        source_mp4_path = os.path.join(data_root_dir, 'video', f'{file_id}.mp4')
-        output_csv = os.path.join(data_root_dir, 'out', f'{file_id}.csv')
-        meta_custom_dataset_path = os.path.join(data_root_dir, 'out', f'{file_id}-custom-dataset.npz')  # noqa
-        output_raw_turn_time_prediction_path = os.path.join(data_root_dir, 'out', f'{file_id}-tt.pickle')  # noqa
-        output_shown_mp4_path = os.path.join(data_root_dir, 'out', 'render.mp4')
-        output_detectron_mp4_path = os.path.join(data_root_dir, 'out', 'render-detectron.mp4')
-
-        # additional black background
-        meta_rendered_black_background_mp4_path = os.path.join(data_root_dir, 'out', f'{file_id}-rendered-black-background.mp4')  # noqa
-        output_shown_black_background_mp4_path = os.path.join(data_root_dir, 'out', 'render-black-background.mp4')  # noqa
 
         if not add_newline_if_missing(source_txt_path):
             print('add a new line to txt')
@@ -140,88 +120,10 @@ class SVOGaitAnalyzer(Analyzer):
             start_line=START_LINE,
         )
 
-        # step 6: render_removed_result
-        run_container(
-            client=client,
-            image='zed-env:latest',
-            command=(
-                f'python3 /root/result_render.py --mp4-path "{meta_mp4_path}" '
-                f'--json-path "{meta_json_path}" '
-                f'--targeted-person-bboxes-path "{meta_targeted_person_bboxes_path}" '
-                f'--rendered-mp4-path "{meta_rendered_mp4_path}"'
-            ),
-            volumes={
-                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
-                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
-            },
-            working_dir=WORK_DIR,
-            device_requests=[
-                docker.types.DeviceRequest(
-                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
-                    capabilities=[['gpu']],
-                ),
-            ],
-        )
-
-        # step 7: render_removed_result but black backgound
-        run_container(
-            client=client,
-            image='zed-env:latest',
-            command=(
-                f'python3 /root/result_render.py --mp4-path "{meta_mp4_path}" '
-                f'--json-path "{meta_json_path}" '
-                f'--targeted-person-bboxes-path "{meta_targeted_person_bboxes_path}" '
-                f'--rendered-mp4-path "{meta_rendered_black_background_mp4_path}" '
-                f'--draw-all-keypoints --draw-black-background'
-            ),
-            volumes={
-                BACKEND_FOLDER_PATH: {'bind': WORK_DIR, 'mode': 'rw'},
-                SYNC_FILE_SERVER_STORE_PATH: {'bind': '/data', 'mode': 'rw'},
-            },
-            working_dir=WORK_DIR,
-            device_requests=[
-                docker.types.DeviceRequest(
-                    device_ids=CUDA_VISIBLE_DEVICES.split(','),
-                    capabilities=[['gpu']],
-                ),
-            ],
-        )
-
-        # step 8: fix timestemp
+        # step 6: fix timestemp
         fix_timestamp_file(timestamp_file_path=source_txt_path, json_path=meta_json_path)
 
-        # step 9: svo depth sensing
-        svo_depth_sensing_config = {
-            'file_id': file_id,
-        }
-        svo_depth_sensing_instance = svo_depth_sensing_task.delay(
-            submit_uuid,
-            svo_depth_sensing_config,
-        )
-        while not svo_depth_sensing_instance.ready():
-            time.sleep(3)
-
-        if svo_depth_sensing_instance.failed():
-            raise RuntimeError('SVO Depth Sensing Task falied!')
-
-        # step 10: run R to get gait parameters
-        try:
-            gait_folder_path = os.path.join(data_root_dir, 'out', 'zGait')
-            shutil.copytree('algorithms/gait_basic/zGait/', gait_folder_path)
-            shutil.copyfile(
-                meta_csv_path,
-                os.path.join(gait_folder_path, 'input', '2001-01-01-1', '2001-01-01-1-1.csv'),
-            )
-            os.system(f'cd {gait_folder_path} && Rscript gait_batch.R input/20010101.csv')
-            shutil.copyfile(
-                os.path.join(gait_folder_path, 'output/2001-01-01-1/2001-01-01-1.csv'),
-                output_csv,
-            )
-            replace_in_filenames(gait_folder_path, '2001-01-01-1', file_id)
-        except Exception as e:
-            print(e, 'No 3D csv')
-
-        # step 11: turn time
+        # step 7: turn time
         turn_time_config = {
             'file_id': file_id,
             'turn_time_pretrained_path': self.turn_time_pretrained_path,
@@ -238,80 +140,71 @@ class SVOGaitAnalyzer(Analyzer):
 
         tt = -1
         with allow_join_result():
-            def on_msg(*args, **kwargs):
-                print(f'on_msg: {args}, {kwargs}')
             try:
                 tt = turn_time_task_instance.get(on_message=on_msg, timeout=10)
             except TimeoutError:
                 print('Timeout!')
 
-        # step 12: finalize
+        # step 8: generate videos
+        video_generation_3d_config = {
+            'file_id': file_id,
+        }
+        video_generation_3d_task_instance = video_generation_3d_task.delay(
+            submit_uuid,
+            video_generation_3d_config,
+        )
+        # since video generation takes time; collect after steps 9 and 10
+
+        # step 9: svo depth sensing
+        svo_depth_sensing_config = {
+            'file_id': file_id,
+        }
+        svo_depth_sensing_instance = svo_depth_sensing_task.delay(
+            submit_uuid,
+            svo_depth_sensing_config,
+        )
+        while not svo_depth_sensing_instance.ready():
+            time.sleep(3)
+
+        if svo_depth_sensing_instance.failed():
+            raise RuntimeError('SVO Depth Sensing Task falied!')
+
+        # step 10: run R to get gait parameters
+        r_estimation_config = {
+            'file_id': file_id,
+        }
+        r_estimation_instance = r_estimation_task.delay(
+            submit_uuid,
+            r_estimation_config,
+        )
+        while not r_estimation_instance.ready():
+            time.sleep(3)
+
+        if r_estimation_instance.failed():
+            raise RuntimeError('R estimation falied!')
+
         sl = -1
         sw = -1
         st = -1
         cadence = -1
         velocity = -1
+        with allow_join_result():
+            try:
+                gait_parameters = r_estimation_instance.get(on_message=on_msg, timeout=10)
+                sl = gait_parameters['sl']
+                sw = gait_parameters['sw']
+                st = gait_parameters['st']
+                cadence = gait_parameters['cadence']
+                velocity = gait_parameters['velocity']
+            except TimeoutError:
+                print('Timeout!')
 
-        try:
-            df = pd.read_csv(output_csv, index_col=0)
+        # check video generation
+        while not video_generation_3d_task_instance.ready():
+            time.sleep(3)
 
-            table = df.T['total'].T
-
-            left_n = table['left.size']
-            right_n = table['right.size']
-            left_sl = table['left.stride.lt.mu']
-            right_sl = table['right.stride.lt.mu']
-            left_sw = table['left.stride.wt.mu']
-            right_sw = table['right.stride.wt.mu']
-            left_st = table['left.stride.t.mu']
-            right_st = table['right.stride.t.mu']
-            # tt = table['turn.t']
-            cadence = table['cadence']
-            velocity = table['velocity']
-
-            sl = avg(left_sl, right_sl, left_n, right_n)
-            sw = avg(left_sw, right_sw, left_n, right_n)
-            st = avg(left_st, right_st, left_n, right_n)
-        except Exception as e:
-            print(e)
-
-        # step 13: generate videos
-        try:
-            # (openpose + box) + turning; (openpose + box) is on video_path
-            output_shown_mp4_path_temp = output_shown_mp4_path + '.tmp.mp4'
-            new_render(
-                video_path=meta_rendered_mp4_path,
-                detectron_custom_dataset_path=meta_custom_dataset_path,
-                tt_pickle_path=output_raw_turn_time_prediction_path,
-                output_video_path=output_shown_mp4_path_temp,
-                draw_keypoint=False
-            )
-            # browser mp4v encoding issue -> convert to h264
-            os.system(f'ffmpeg -y -i {output_shown_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_mp4_path}')  # noqa
-            os.system(f'rm {output_shown_mp4_path_temp}')
-
-            # for black background
-            output_shown_black_background_mp4_path_temp = output_shown_black_background_mp4_path + '.tmp.mp4'  # noqa
-            new_render(
-                video_path=meta_rendered_black_background_mp4_path,
-                detectron_custom_dataset_path=meta_custom_dataset_path,
-                tt_pickle_path=output_raw_turn_time_prediction_path,
-                output_video_path=output_shown_black_background_mp4_path_temp,
-                draw_keypoint=False
-            )
-            os.system(f'ffmpeg -y -i {output_shown_black_background_mp4_path_temp} -movflags +faststart -vcodec libx264 -f mp4 {output_shown_black_background_mp4_path}')  # noqa
-            os.system(f'rm {output_shown_black_background_mp4_path_temp}')
-
-            # detectron + turing; draw detectron by meta_custom_dataset_path
-            new_render(
-                video_path=source_mp4_path,
-                detectron_custom_dataset_path=meta_custom_dataset_path,
-                tt_pickle_path=output_raw_turn_time_prediction_path,
-                output_video_path=output_detectron_mp4_path,
-                draw_keypoint=True,
-            )
-        except Exception as e:
-            print('render vidso error:', e)
+        if video_generation_3d_task_instance.failed():
+            raise RuntimeError('Video Generation 3D Task falied!')
 
         return [
             {
