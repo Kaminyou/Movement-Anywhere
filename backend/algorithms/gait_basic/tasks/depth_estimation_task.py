@@ -39,14 +39,14 @@ app = Celery(
 class DepthEstimationTaskRunner(Runner):
     def __init__(
         self,
-        submit_uuid: str,
+        request_uuid: str,
         config: t.Dict[str, t.Any],
         data_synchronizer: DataSynchronizer,
         celery_task_id: str,
         update_state: t.Callable,
         result_hook: t.Optional[t.Dict] = None,
     ):
-        self.submit_uuid = submit_uuid
+        self.request_uuid = request_uuid
         self.config = config
         self.file_id = self.config['file_id']
         self.data_synchronizer = data_synchronizer
@@ -57,27 +57,27 @@ class DepthEstimationTaskRunner(Runner):
         # input
         self.input_custom_dataset_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-custom-dataset.npz',
         )
         self.input_custom_dataset_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-custom-dataset.npz',
         )
 
         self.input_3dkeypoint_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             '3d',
             f'{self.file_id}.mp4.npy',
         )
         self.input_3dkeypoint_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             '3d',
             f'{self.file_id}.mp4.npy',
@@ -85,13 +85,13 @@ class DepthEstimationTaskRunner(Runner):
 
         self.input_raw_turn_time_prediction_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-tt.pickle',
         )
         self.input_raw_turn_time_prediction_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-tt.pickle',
         )
@@ -131,14 +131,14 @@ class DepthEstimationTaskRunner(Runner):
             self.result_hook['gait_parameters'] = gait_parameters
 
     def clear(self):
-        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid))
+        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.request_uuid))
 
 
 @app.task(bind=True, name='depth_estimation_task', queue='depth_estimation_task_queue')
-def depth_estimation_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
+def depth_estimation_task(self, request_uuid: str, config: t.Dict[str, t.Any]):
 
     redis = Redis.from_url(TASK_SYNC_URL)
-    key = f'depth_estimation_task_{submit_uuid}'
+    key = f'depth_estimation_task_{request_uuid}'
     if redis.exists(key):
         print(f'Skip this task since {key} exists')
         return True
@@ -157,7 +157,7 @@ def depth_estimation_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
     }
 
     runner = DepthEstimationTaskRunner(
-        submit_uuid=submit_uuid,
+        request_uuid=request_uuid,
         config=config,
         data_synchronizer=data_synchronizer,
         celery_task_id=self.request.id,

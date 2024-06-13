@@ -16,6 +16,6 @@ class RequestSchema(Schema):
 
     @post_load
     def add_uuid(self, data, **kwargs):
-        data["submitUUID"] = get_uuid()
+        data["requestUUID"] = get_uuid()
         data["toShow"] = True
         return data

@@ -13,7 +13,7 @@ result_schema = ResultSchema()
 def inference_gait(
     dataType: str,
     modelName: str,
-    submitUUID: str,
+    requestUUID: str,
     session: Session,
     trial_id: str,
     height: float,
@@ -30,8 +30,8 @@ def inference_gait(
         raise ValueError(f'dataType={dataType} and modelName={modelName} not exist')
 
     results = analyzer.run(
-        submit_uuid=submitUUID,
-        data_root_dir=os.path.join('/data/', submitUUID),
+        request_uuid=requestUUID,
+        data_root_dir=os.path.join('/data/', requestUUID),
         file_id=trial_id,
         height=height,
         focal_length=focal_length,
@@ -39,7 +39,7 @@ def inference_gait(
 
     for result in results:
         form_date = result_schema.load({
-            'requestUUID': submitUUID,
+            'requestUUID': requestUUID,
             'resultKey': result['key'],
             'resultValue': str(result['value']),
             'resultType': result['type'],

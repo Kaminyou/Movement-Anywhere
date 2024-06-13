@@ -48,13 +48,13 @@ if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
 class SVOConversionTask(Runner):
     def __init__(
         self,
-        submit_uuid: str,
+        request_uuid: str,
         config: t.Dict[str, t.Any],
         data_synchronizer: DataSynchronizer,
         celery_task_id: str,
         update_state: t.Callable,
     ):
-        self.submit_uuid = submit_uuid
+        self.request_uuid = request_uuid
         self.config = config
         self.file_id = self.config['file_id']
         self.data_synchronizer = data_synchronizer
@@ -64,13 +64,13 @@ class SVOConversionTask(Runner):
         # input
         self.input_svo_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'input',
             f'{self.file_id}.svo',
         )
         self.input_svo_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'input',
             f'{self.file_id}.svo',
         )
@@ -78,26 +78,26 @@ class SVOConversionTask(Runner):
         # output
         self.output_mp4_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'input',
             f'{self.file_id}.mp4',
         )
         self.output_mp4_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'input',
             f'{self.file_id}.mp4',
         )
 
         self.output_avi_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}.avi',
         )
         self.output_avi_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}.avi',
         )
@@ -122,7 +122,7 @@ class SVOConversionTask(Runner):
 
     def execute(self):
         os.makedirs(
-            os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid, 'out'), exist_ok=True,
+            os.path.join(WORKER_WORKING_DIR_PATH, self.request_uuid, 'out'), exist_ok=True,
         )
         # convert to avi
         retry = 0
@@ -170,14 +170,14 @@ class SVOConversionTask(Runner):
         )
 
     def clear(self):
-        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid))
+        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.request_uuid))
 
 
 @app.task(bind=True, name='svo_conversion_task', queue='svo_conversion_task_queue')
-def svo_conversion_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
+def svo_conversion_task(self, request_uuid: str, config: t.Dict[str, t.Any]):
 
     redis = Redis.from_url(TASK_SYNC_URL)
-    key = f'svo_conversion_task_{submit_uuid}'
+    key = f'svo_conversion_task_{request_uuid}'
     if redis.exists(key):
         print(f'Skip this task since {key} exists')
         return True
@@ -191,7 +191,7 @@ def svo_conversion_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
     )
 
     runner = SVOConversionTask(
-        submit_uuid=submit_uuid,
+        request_uuid=request_uuid,
         config=config,
         data_synchronizer=data_synchronizer,
         celery_task_id=self.request.id,

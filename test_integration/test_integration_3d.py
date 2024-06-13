@@ -61,9 +61,9 @@ def submit_data(api_token):
 
 @pytest.mark.integration
 def test_integration_3d_file_submission(submit_data):
-    task_id, submit_uuid = submit_data['task_id'], submit_data['submit_uuid']
-    assert os.path.exists(os.path.join('/data', submit_uuid, 'input', '2024-05-04-1-14.svo'))
-    assert os.path.exists(os.path.join('/data', submit_uuid, 'input', '2024-05-04-1-14.txt'))
+    task_id, request_uuid = submit_data['task_id'], submit_data['request_uuid']
+    assert os.path.exists(os.path.join('/data', request_uuid, 'input', '2024-05-04-1-14.svo'))
+    assert os.path.exists(os.path.join('/data', request_uuid, 'input', '2024-05-04-1-14.txt'))
 
     # Wait for the task to complete
     task_obj = scheduler.AsyncResult(task_id)
@@ -77,7 +77,7 @@ def test_integration_3d_file_submission(submit_data):
 
     # Check output files
     for file_name in ['render-black-background.mp4', 'render.mp4', '2024-05-04-1-14-tt.pickle']:
-        assert os.path.exists(os.path.join('/data', submit_uuid, 'out', file_name))
+        assert os.path.exists(os.path.join('/data', request_uuid, 'out', file_name))
 
     # Check output values
     connection = mysql.connector.connect(
@@ -88,7 +88,7 @@ def test_integration_3d_file_submission(submit_data):
     )
     try:
         cursor = connection.cursor()
-        query = f"SELECT * FROM results WHERE requestUUID = '{submit_uuid}';"
+        query = f"SELECT * FROM results WHERE requestUUID = '{request_uuid}';"
         cursor.execute(query)
         records = cursor.fetchall()
         output_gait_parameters = {row[3]: {

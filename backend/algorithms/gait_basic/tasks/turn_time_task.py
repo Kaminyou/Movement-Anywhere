@@ -40,14 +40,14 @@ app = Celery(
 class TurnTimeTaskRunner(Runner):
     def __init__(
         self,
-        submit_uuid: str,
+        request_uuid: str,
         config: t.Dict[str, t.Any],
         data_synchronizer: DataSynchronizer,
         celery_task_id: str,
         update_state: t.Callable,
         result_hook: t.Optional[t.Dict] = None,
     ):
-        self.submit_uuid = submit_uuid
+        self.request_uuid = request_uuid
         self.config = config
         self.file_id = self.config['file_id']
         self.data_synchronizer = data_synchronizer
@@ -58,14 +58,14 @@ class TurnTimeTaskRunner(Runner):
         # input
         self.input_3dkeypoint_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             '3d',
             f'{self.file_id}.mp4.npy',
         )
         self.input_3dkeypoint_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             '3d',
             f'{self.file_id}.mp4.npy',
@@ -74,13 +74,13 @@ class TurnTimeTaskRunner(Runner):
         # output
         self.output_raw_turn_time_prediction_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-tt.pickle',
         )
         self.output_raw_turn_time_prediction_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-tt.pickle',
         )
@@ -113,14 +113,14 @@ class TurnTimeTaskRunner(Runner):
             self.result_hook['tt'] = tt
 
     def clear(self):
-        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid))
+        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.request_uuid))
 
 
 @app.task(bind=True, name='turn_time_task', queue='turn_time_task_queue')
-def turn_time_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
+def turn_time_task(self, request_uuid: str, config: t.Dict[str, t.Any]):
 
     redis = Redis.from_url(TASK_SYNC_URL)
-    key = f'turn_time_task_{submit_uuid}'
+    key = f'turn_time_task_{request_uuid}'
     if redis.exists(key):
         print(f'Skip this task since {key} exists')
         return True
@@ -136,7 +136,7 @@ def turn_time_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
     result_hook = {'tt': -1}
 
     runner = TurnTimeTaskRunner(
-        submit_uuid=submit_uuid,
+        request_uuid=request_uuid,
         config=config,
         data_synchronizer=data_synchronizer,
         celery_task_id=self.request.id,

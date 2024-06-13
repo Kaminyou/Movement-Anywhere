@@ -7,7 +7,7 @@ class ResultModel(db.Model):
     __tablename__ = "results"
 
     id = db.Column(db.Integer, primary_key=True)
-    requestUUID = db.Column(db.ForeignKey('requests.submitUUID'), nullable=False)
+    requestUUID = db.Column(db.ForeignKey('requests.requestUUID'), nullable=False)
     resultUUID = db.Column(db.CHAR(36), nullable=False)
 
     # model and data info

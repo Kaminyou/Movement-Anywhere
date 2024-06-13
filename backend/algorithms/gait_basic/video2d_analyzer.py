@@ -41,7 +41,7 @@ class Video2DGaitAnalyzer(Analyzer):
 
     def run(
         self,
-        submit_uuid: str,
+        request_uuid: str,
         data_root_dir: str,
         file_id: str,
         height: float,
@@ -69,12 +69,12 @@ class Video2DGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         track_and_extract_task_instance = track_and_extract_task.delay(
-            submit_uuid,
+            request_uuid,
             track_and_extract_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=track_and_extract_task_instance,
             subtask_name=SubtaskEnum.TRACK_AND_EXTRACT.value,
         )
@@ -91,12 +91,12 @@ class Video2DGaitAnalyzer(Analyzer):
             'turn_time_pretrained_path': self.turn_time_pretrained_path,
         }
         turn_time_task_instance = turn_time_task.delay(
-            submit_uuid,
+            request_uuid,
             turn_time_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=turn_time_task_instance,
             subtask_name=SubtaskEnum.TURN_TIME.value,
         )
@@ -126,12 +126,12 @@ class Video2DGaitAnalyzer(Analyzer):
             'depth_pretrained_path': self.depth_pretrained_path,
         }
         depth_estimation_task_instance = depth_estimation_task.delay(
-            submit_uuid,
+            request_uuid,
             depth_estimation_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=depth_estimation_task_instance,
             subtask_name=SubtaskEnum.DEPTH_ESTIMATION.value,
         )
@@ -141,12 +141,12 @@ class Video2DGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         video_generation_2d_task_instance = video_generation_2d_task.delay(
-            submit_uuid,
+            request_uuid,
             video_generation_2d_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=video_generation_2d_task_instance,
             subtask_name=SubtaskEnum.VIDEO_GENERATION_2D.value,
         )

@@ -12,7 +12,7 @@ class Analyzer(ABC):
     @abstractmethod
     def run(
         self,
-        submit_uuid: str,
+        request_uuid: str,
         data_root_dir: str,
         file_id: str,
         height: float = None,

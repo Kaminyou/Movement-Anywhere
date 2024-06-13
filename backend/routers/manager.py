@@ -213,8 +213,8 @@ def manager_upload_gait_csv():
         trial_id = form_data['trialID']
         request_obj = RequestModel(**form_data)
 
-        submit_uuid = request_obj.submitUUID
-        data_root = f'/data/{submit_uuid}'
+        request_uuid = request_obj.requestUUID
+        data_root = f'/data/{request_uuid}'
         os.makedirs(data_root)
         os.makedirs(os.path.join(data_root, 'input'))
         data_type = request_obj.dataType
@@ -256,12 +256,12 @@ def manager_upload_gait_csv():
 
         request_obj.save_to_db()
         try:
-            task = inference_gait_task.delay(request_obj.submitUUID)
+            task = inference_gait_task.delay(request_obj.requestUUID)
             return (
                 {
                     'msg': 'File uploaded successfully',
                     'task_id': task.id,
-                    'submit_uuid': request_obj.submitUUID,
+                    'request_uuid': request_obj.requestUUID,
                 },
                 HTTPStatus.OK,
             )
@@ -324,7 +324,7 @@ def manager_request_results():
             sub_results['dateUpload'] = request_object.__dict__['dateUpload'].strftime("%Y-%m-%d")
             sub_results['date'] = request_object.__dict__['date'].strftime("%Y-%m-%d")
             sub_results['trialID'] = request_object.__dict__['trialID']
-            request_uuid = request_object.__dict__['submitUUID']
+            request_uuid = request_object.__dict__['requestUUID']
             sub_results['detail'] = request_uuid
             result_objects = ResultModel.find_by_requestUUID(requestUUID=request_uuid)
             for result_object in result_objects:
@@ -448,7 +448,7 @@ def manager_request_report_download():
                     sss += f'{request_object.__dict__["trialID"]},'
                     sss += f'{request_object.__dict__["description"]}'
                     result_objects = ResultModel.find_by_requestUUID(
-                        requestUUID=request_object.__dict__["submitUUID"],
+                        requestUUID=request_object.__dict__["requestUUID"],
                     )
                     collections = {
                         'stride length': 0,

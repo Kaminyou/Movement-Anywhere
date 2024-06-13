@@ -7,7 +7,7 @@ class SubtaskModel(db.Model):
     __tablename__ = 'subtasks'
 
     id = db.Column(db.Integer, primary_key=True)
-    requestUUID = db.Column(db.ForeignKey('requests.submitUUID'), nullable=False)  # for server
+    requestUUID = db.Column(db.ForeignKey('requests.requestUUID'), nullable=False)  # for server
     subtaskUUID = db.Column(db.CHAR(36), nullable=False)  # for server
     subtaskID = db.Column(db.CHAR(36), nullable=False)  # for celery
     subtaskName = db.Column(db.String(100), nullable=False)
