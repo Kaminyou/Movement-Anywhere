@@ -4,12 +4,16 @@ import time
 import typing as t
 
 from celery.result import allow_join_result
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from algorithms._analyzer import Analyzer
 from algorithms.gait_basic.utils.calculate import add_newline_if_missing, fix_timestamp_file
 from algorithms.gait_basic.utils.track import (
     remove_non_target_person, set_zero_prob_for_keypoint_before_start_line,
 )
+from algorithms.gait_basic.utils.subtask_utils import register_subtask
+from enums.subtask import SubtaskEnum
 
 
 BACKEND_FOLDER_PATH = os.environ['BACKEND_FOLDER_PATH']
@@ -47,6 +51,13 @@ class SVOGaitAnalyzer(Analyzer):
 
         def on_msg(*args, **kwargs):
             print(f'on_msg: {args}, {kwargs}')
+        
+        engine = create_engine(
+            os.getenv('SQLALCHEMY_DATABASE_URI'),
+            pool_pre_ping=True,
+        )
+        Session = sessionmaker(bind=engine)
+        session = Session()
 
         os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
@@ -74,6 +85,12 @@ class SVOGaitAnalyzer(Analyzer):
             submit_uuid,
             svo_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=svo_conversion_task_instance,
+            subtask_name=SubtaskEnum.SVO_CONVRESION.value,
+        )
         while not svo_conversion_task_instance.ready():
             time.sleep(3)
 
@@ -88,6 +105,12 @@ class SVOGaitAnalyzer(Analyzer):
             submit_uuid,
             openpose_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=openpose_task_instance,
+            subtask_name=SubtaskEnum.OPENOPSE.value,
+        )
         while not openpose_task_instance.ready():
             time.sleep(3)
 
@@ -101,6 +124,12 @@ class SVOGaitAnalyzer(Analyzer):
         track_and_extract_task_instance = track_and_extract_task.delay(
             submit_uuid,
             track_and_extract_config,
+        )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=track_and_extract_task_instance,
+            subtask_name=SubtaskEnum.TRACK_AND_EXTRACT.value,
         )
         while not track_and_extract_task_instance.ready():
             time.sleep(3)
@@ -132,6 +161,12 @@ class SVOGaitAnalyzer(Analyzer):
             submit_uuid,
             turn_time_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=turn_time_task_instance,
+            subtask_name=SubtaskEnum.TURN_TIME.value,
+        )
         while not turn_time_task_instance.ready():
             time.sleep(3)
 
@@ -153,6 +188,12 @@ class SVOGaitAnalyzer(Analyzer):
             submit_uuid,
             video_generation_3d_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=video_generation_3d_task_instance,
+            subtask_name=SubtaskEnum.VIDEO_GENERATION_3D.value,
+        )
         # since video generation takes time; collect after steps 9 and 10
 
         # step 9: svo depth sensing
@@ -162,6 +203,12 @@ class SVOGaitAnalyzer(Analyzer):
         svo_depth_sensing_instance = svo_depth_sensing_task.delay(
             submit_uuid,
             svo_depth_sensing_config,
+        )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=svo_depth_sensing_instance,
+            subtask_name=SubtaskEnum.SVO_DEPTH_SENSING.value,
         )
         while not svo_depth_sensing_instance.ready():
             time.sleep(3)
@@ -176,6 +223,12 @@ class SVOGaitAnalyzer(Analyzer):
         r_estimation_instance = r_estimation_task.delay(
             submit_uuid,
             r_estimation_config,
+        )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=r_estimation_instance,
+            subtask_name=SubtaskEnum.R_ESTIMATION.value,
         )
         while not r_estimation_instance.ready():
             time.sleep(3)
