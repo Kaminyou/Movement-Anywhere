@@ -4,9 +4,12 @@ import time
 import typing as t
 
 from celery.result import allow_join_result
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from algorithms._analyzer import Analyzer
-
+from algorithms.gait_basic.utils.subtask_utils import register_subtask
+from enums.subtask import SubtaskEnum
 
 BACKEND_FOLDER_PATH = os.environ['BACKEND_FOLDER_PATH']
 WORK_DIR = '/root/backend'
@@ -48,6 +51,13 @@ class Video2DGaitAnalyzer(Analyzer):
         def on_msg(*args, **kwargs):
             print(f'on_msg: {args}, {kwargs}')
 
+        engine = create_engine(
+            os.getenv('SQLALCHEMY_DATABASE_URI'),
+            pool_pre_ping=True,
+        )
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
         os.makedirs(os.path.join(data_root_dir, 'out'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
@@ -62,6 +72,13 @@ class Video2DGaitAnalyzer(Analyzer):
             submit_uuid,
             track_and_extract_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=track_and_extract_task_instance,
+            subtask_name=SubtaskEnum.TRACK_AND_EXTRACT.value,
+        )
+
         while not track_and_extract_task_instance.ready():
             time.sleep(3)
 
@@ -77,6 +94,13 @@ class Video2DGaitAnalyzer(Analyzer):
             submit_uuid,
             turn_time_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=turn_time_task_instance,
+            subtask_name=SubtaskEnum.TURN_TIME.value,
+        )
+
         while not turn_time_task_instance.ready():
             time.sleep(3)
 
@@ -105,6 +129,12 @@ class Video2DGaitAnalyzer(Analyzer):
             submit_uuid,
             depth_estimation_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=depth_estimation_task_instance,
+            subtask_name=SubtaskEnum.DEPTH_ESTIMATION.value,
+        )
 
         # video generation
         video_generation_2d_config = {
@@ -114,6 +144,13 @@ class Video2DGaitAnalyzer(Analyzer):
             submit_uuid,
             video_generation_2d_config,
         )
+        register_subtask(
+            session=session,
+            request_uuid=submit_uuid,
+            subtask_instance=video_generation_2d_task_instance,
+            subtask_name=SubtaskEnum.VIDEO_GENERATION_2D.value,
+        )
+
         while not depth_estimation_task_instance.ready() or not video_generation_2d_task_instance.ready():  # noqa
             time.sleep(3)
 
