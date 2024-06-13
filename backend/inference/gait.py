@@ -1,5 +1,7 @@
 import os
 
+from sqlalchemy.orm.session import Session
+
 from models import ResultModel
 from schemas.result import ResultSchema
 from .config import data_and_model_map_to_class, get_focal_length_by_model_name
@@ -9,11 +11,11 @@ result_schema = ResultSchema()
 
 
 def inference_gait(
-    dataType,
-    modelName,
-    submitUUID,
-    session,
-    trial_id,
+    dataType: str,
+    modelName: str,
+    submitUUID: str,
+    session: Session,
+    trial_id: str,
     height: float,
     focal_length: float,
 ):
