@@ -1,4 +1,10 @@
 # Changelog
+## v0.8.6
+### Improvements
+- Improve 2d alg visualization (remove uncertain keypoints/ add target box)
+- Change 2d alg video generation task name
+
+
 ## v0.8.5
 ### New features
 - Fully implement distributed inference for the 3D algorithm
