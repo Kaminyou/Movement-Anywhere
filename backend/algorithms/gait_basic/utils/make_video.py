@@ -231,7 +231,7 @@ def calculate_iou(
     # Calculate intersection area
     inter_width = inter_right - inter_left
     inter_height = inter_bottom - inter_top
-    if inter_width > 0 and inter_height > 0: # Check if there is an intersection
+    if inter_width > 0 and inter_height > 0:  # Check if there is an intersection
         intersection_area = inter_width * inter_height
     else:
         intersection_area = 0
@@ -249,7 +249,7 @@ def get_target_boxes_and_keypoints_from_detection_2d(
     detectron_2d,
     targeted_person_bboxes,
 ):
-    
+
     bb = detectron_2d['boxes']
     kp = detectron_2d['keypoints']
     results_bb = []
@@ -257,11 +257,11 @@ def get_target_boxes_and_keypoints_from_detection_2d(
     for i in range(len(bb)):
         if len(bb[i][1]) == 0 or len(kp[i][1]) == 0:
             # No bbox/keypoints detected for this frame -> will be interpolated
-            results_bb.append(None) # 4 bounding box coordinates
-            results_kp.append(None) # 17 COCO keypoints
+            results_bb.append(None)  # 4 bounding box coordinates
+            results_kp.append(None)  # 17 COCO keypoints
         elif len(targeted_person_bboxes[i]) == 0:
-            results_bb.append(None) # 4 bounding box coordinates
-            results_kp.append(None) # 17 COCO keypoints
+            results_bb.append(None)  # 4 bounding box coordinates
+            results_kp.append(None)  # 17 COCO keypoints
         else:
             max_iou = 0
             potential_box_idx = None
@@ -274,12 +274,12 @@ def get_target_boxes_and_keypoints_from_detection_2d(
                     max_iou = _iou
                     potential_box_idx = available_box_idx
             if max_iou < 0.5 or potential_box_idx is None:
-                results_bb.append(None) # 4 bounding box coordinates
-                results_kp.append(None) # 17 COCO keypoints
+                results_bb.append(None)  # 4 bounding box coordinates
+                results_kp.append(None)  # 17 COCO keypoints
             else:
                 best_match = potential_box_idx
                 best_bb = bb[i][1][best_match, :4]
-                best_kp = kp[i][1][best_match].T.copy()[:, [0,1,3]]
+                best_kp = kp[i][1][best_match].T.copy()[:, [0, 1, 3]]
                 results_bb.append(best_bb)
                 results_kp.append(best_kp)
     return results_bb, results_kp
@@ -329,7 +329,7 @@ def render_detectron_2d_with_target_box(
                 frame, [left, top], [left + width, top + height], (255, 0, 0), 5,
             )
 
-        if keypoints[frame_id] is not None and keypoints[frame_id][15][2] >= 0.2 and keypoints[frame_id][16][2] >= 0.2:
+        if keypoints[frame_id] is not None and keypoints[frame_id][15][2] >= 0.2 and keypoints[frame_id][16][2] >= 0.2:  # noqa
 
             # for point in keypoints[frame_id]:
             #     if point[2] >= 0.2:
@@ -349,7 +349,7 @@ def render_detectron_2d_with_target_box(
                     frame,
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
-                    (255, 0, 255), # purple; right
+                    (255, 0, 255),  # purple; right
                     5,
                 )
 
@@ -376,7 +376,7 @@ def render_detectron_2d_with_target_box(
                     frame,
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
-                    (255, 255, 0), # light blue; left
+                    (255, 255, 0),  # light blue; left
                     5,
                 )
 

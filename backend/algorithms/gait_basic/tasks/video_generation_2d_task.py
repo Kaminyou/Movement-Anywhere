@@ -94,7 +94,7 @@ class VideoGeneration2DTaskRunner(Runner):
             'out',
             f'{self.file_id}-target_person_bboxes.pickle',
         )
-        
+
         self.input_raw_turn_time_prediction_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
             self.submit_uuid,
