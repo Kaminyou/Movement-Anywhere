@@ -1,4 +1,9 @@
 # Changelog
+## v0.9.0
+### New features
+- Add active learning tools
+
+
 ## v0.8.7
 ### Improvements
 - Upgrade test env
