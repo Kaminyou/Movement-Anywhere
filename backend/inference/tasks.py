@@ -30,14 +30,14 @@ app = Celery(
     queue='inference_gait_task_queue',
     default_retry_delay=60,
 )
-def inference_gait_task(self, submitUUID: str):
-    print(submitUUID)
+def inference_gait_task(self, requestUUID: str):
+    print(requestUUID)
     """
     The gait inference process
     """
 
     redis = Redis.from_url(TASK_SYNC_URL)
-    key = f'entry_task_{submitUUID}'
+    key = f'entry_task_{requestUUID}'
     if redis.exists(key):
         print(f'Skip this task since {key} exists')
         return True
@@ -51,7 +51,7 @@ def inference_gait_task(self, submitUUID: str):
     Session = sessionmaker(bind=engine)
     session = Session()
     request_instance = session.query(RequestModel).filter_by(
-        submitUUID=submitUUID).first()
+        requestUUID=requestUUID).first()
     request_instance.status = Status.COMPUTING
     session.commit()
 
@@ -65,7 +65,7 @@ def inference_gait_task(self, submitUUID: str):
         inference_gait(
             dataType=dataType,
             modelName=modelName,
-            submitUUID=submitUUID,
+            requestUUID=requestUUID,
             session=session,
             trial_id=trialID,
             height=height,
@@ -73,14 +73,14 @@ def inference_gait_task(self, submitUUID: str):
         )
 
         request_instance = session.query(RequestModel).filter_by(
-            submitUUID=submitUUID).first()
+            requestUUID=requestUUID).first()
         request_instance.status = Status.DONE
         session.commit()
 
     except Exception as e:
         print(e)
         request_instance = session.query(RequestModel).filter_by(
-            submitUUID=submitUUID).first()
+            requestUUID=requestUUID).first()
         request_instance.status = Status.ERROR
         request_instance.statusInfo = str(e)[:75]
         session.commit()

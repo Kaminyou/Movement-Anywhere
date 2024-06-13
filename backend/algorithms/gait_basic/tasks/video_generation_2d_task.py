@@ -39,13 +39,13 @@ app = Celery(
 class VideoGeneration2DTaskRunner(Runner):
     def __init__(
         self,
-        submit_uuid: str,
+        request_uuid: str,
         config: t.Dict[str, t.Any],
         data_synchronizer: DataSynchronizer,
         celery_task_id: str,
         update_state: t.Callable,
     ):
-        self.submit_uuid = submit_uuid
+        self.request_uuid = request_uuid
         self.config = config
         self.file_id = self.config['file_id']
         self.data_synchronizer = data_synchronizer
@@ -55,27 +55,27 @@ class VideoGeneration2DTaskRunner(Runner):
         # input
         self.input_mp4_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'input',
             f'{self.file_id}.mp4',
         )
         self.input_mp4_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'input',
             f'{self.file_id}.mp4',
         )
 
         self.input_detectron_2d_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             '2d',
             f'{self.file_id}.mp4.npz',
         )
         self.input_detectron_2d_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             '2d',
             f'{self.file_id}.mp4.npz',
@@ -83,27 +83,27 @@ class VideoGeneration2DTaskRunner(Runner):
 
         self.input_targeted_person_bboxes_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-target_person_bboxes.pickle',
         )
 
         self.input_targeted_person_bboxes_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-target_person_bboxes.pickle',
         )
 
         self.input_raw_turn_time_prediction_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-tt.pickle',
         )
         self.input_raw_turn_time_prediction_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             f'{self.file_id}-tt.pickle',
         )
@@ -111,26 +111,26 @@ class VideoGeneration2DTaskRunner(Runner):
         # output
         self.output_shown_mp4_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             'render.mp4',
         )
         self.output_shown_mp4_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             'render.mp4',
         )
 
         self.output_shown_black_background_mp4_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             'render-black-background.mp4',
         )
         self.output_shown_black_background_mp4_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
-            self.submit_uuid,
+            self.request_uuid,
             'out',
             'render-black-background.mp4',
         )
@@ -191,14 +191,14 @@ class VideoGeneration2DTaskRunner(Runner):
         os.system(f'ffmpeg -y -i {self.output_shown_black_background_mp4_path_temp_local} -movflags +faststart -vcodec libx264 -f mp4 {self.output_shown_black_background_mp4_path_local}')  # noqa
 
     def clear(self):
-        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid))
+        shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.request_uuid))
 
 
 @app.task(bind=True, name='video_generation_2d_task', queue='video_generation_2d_task_queue')
-def video_generation_2d_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
+def video_generation_2d_task(self, request_uuid: str, config: t.Dict[str, t.Any]):
 
     redis = Redis.from_url(TASK_SYNC_URL)
-    key = f'video_generation_2d_task_{submit_uuid}'
+    key = f'video_generation_2d_task_{request_uuid}'
     if redis.exists(key):
         print(f'Skip this task since {key} exists')
         return True
@@ -212,7 +212,7 @@ def video_generation_2d_task(self, submit_uuid: str, config: t.Dict[str, t.Any])
     )
 
     runner = VideoGeneration2DTaskRunner(
-        submit_uuid=submit_uuid,
+        request_uuid=request_uuid,
         config=config,
         data_synchronizer=data_synchronizer,
         celery_task_id=self.request.id,

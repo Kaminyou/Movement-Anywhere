@@ -43,7 +43,7 @@ class SVOGaitAnalyzer(Analyzer):
 
     def run(
         self,
-        submit_uuid: str,
+        request_uuid: str,
         data_root_dir: str,
         file_id: str,
         **kwargs,
@@ -82,12 +82,12 @@ class SVOGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         svo_conversion_task_instance = svo_conversion_task.delay(
-            submit_uuid,
+            request_uuid,
             svo_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=svo_conversion_task_instance,
             subtask_name=SubtaskEnum.SVO_CONVRESION.value,
         )
@@ -102,12 +102,12 @@ class SVOGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         openpose_task_instance = openpose_task.delay(
-            submit_uuid,
+            request_uuid,
             openpose_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=openpose_task_instance,
             subtask_name=SubtaskEnum.OPENOPSE.value,
         )
@@ -122,12 +122,12 @@ class SVOGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         track_and_extract_task_instance = track_and_extract_task.delay(
-            submit_uuid,
+            request_uuid,
             track_and_extract_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=track_and_extract_task_instance,
             subtask_name=SubtaskEnum.TRACK_AND_EXTRACT.value,
         )
@@ -158,12 +158,12 @@ class SVOGaitAnalyzer(Analyzer):
             'turn_time_pretrained_path': self.turn_time_pretrained_path,
         }
         turn_time_task_instance = turn_time_task.delay(
-            submit_uuid,
+            request_uuid,
             turn_time_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=turn_time_task_instance,
             subtask_name=SubtaskEnum.TURN_TIME.value,
         )
@@ -185,12 +185,12 @@ class SVOGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         video_generation_3d_task_instance = video_generation_3d_task.delay(
-            submit_uuid,
+            request_uuid,
             video_generation_3d_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=video_generation_3d_task_instance,
             subtask_name=SubtaskEnum.VIDEO_GENERATION_3D.value,
         )
@@ -201,12 +201,12 @@ class SVOGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         svo_depth_sensing_instance = svo_depth_sensing_task.delay(
-            submit_uuid,
+            request_uuid,
             svo_depth_sensing_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=svo_depth_sensing_instance,
             subtask_name=SubtaskEnum.SVO_DEPTH_SENSING.value,
         )
@@ -221,12 +221,12 @@ class SVOGaitAnalyzer(Analyzer):
             'file_id': file_id,
         }
         r_estimation_instance = r_estimation_task.delay(
-            submit_uuid,
+            request_uuid,
             r_estimation_config,
         )
         register_subtask(
             session=session,
-            request_uuid=submit_uuid,
+            request_uuid=request_uuid,
             subtask_instance=r_estimation_instance,
             subtask_name=SubtaskEnum.R_ESTIMATION.value,
         )

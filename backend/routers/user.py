@@ -60,9 +60,9 @@ def upload_gait_svo():
         trial_id = form_data['trialID']
         request_obj = RequestModel(**form_data)
 
-        submit_uuid = request_obj.submitUUID
+        request_uuid = request_obj.requestUUID
 
-        data_root = f'/data/{submit_uuid}'
+        data_root = f'/data/{request_uuid}'
         os.makedirs(data_root)
         os.makedirs(os.path.join(data_root, 'input'))
         data_type = request_obj.dataType
@@ -104,12 +104,12 @@ def upload_gait_svo():
 
         request_obj.save_to_db()
         try:
-            task = inference_gait_task.delay(request_obj.submitUUID)
+            task = inference_gait_task.delay(request_obj.requestUUID)
             return (
                 {
                     'msg': 'File uploaded successfully',
                     'task_id': task.id,
-                    'submit_uuid': request_obj.submitUUID,
+                    'request_uuid': request_obj.requestUUID,
                 },
                 HTTPStatus.OK,
             )
@@ -174,7 +174,7 @@ def request_results():
             sub_results['dateUpload'] = request_object.__dict__['dateUpload'].strftime("%Y-%m-%d")
             sub_results['date'] = request_object.__dict__['date'].strftime("%Y-%m-%d")
             sub_results['trialID'] = request_object.__dict__['trialID']
-            request_uuid = request_object.__dict__['submitUUID']
+            request_uuid = request_object.__dict__['requestUUID']
             sub_results['detail'] = request_uuid
             result_objects = ResultModel.find_by_requestUUID(requestUUID=request_uuid)
             for result_object in result_objects:
@@ -212,15 +212,15 @@ def request_result():
         # if user_instance is None:
         #     return {'msg': 'User does not exist'}, HTTPStatus.FORBIDDEN
 
-        submit_uuid = request.args.get('id')
+        request_uuid = request.args.get('id')
 
-        request_object = RequestModel.find_by_submitID(submitUUID=submit_uuid)
+        request_object = RequestModel.find_by_requestUUID(requestUUID=request_uuid)
 
         sub_results = {}
         sub_results['upload date'] = request_object.__dict__['dateUpload'].strftime("%Y-%m-%d")
         sub_results['experiment date'] = request_object.__dict__['date'].strftime("%Y-%m-%d")
         sub_results['trial ID'] = request_object.__dict__['trialID']
-        result_objects = ResultModel.find_by_requestUUID(requestUUID=submit_uuid)
+        result_objects = ResultModel.find_by_requestUUID(requestUUID=request_uuid)
         for result_object in result_objects:
             k = result_object.__dict__['resultKey']
             v = result_object.__dict__['resultValue']
@@ -321,8 +321,8 @@ def get_user_profile_with_uuid():
         # if not UserModel.find_by_account(account=account):
         #     return {"msg": "Wrong account or password"}, 401
 
-        submit_uuid = request.args.get('id')
-        request_object = RequestModel.find_by_submitID(submitUUID=submit_uuid)
+        request_uuid = request.args.get('id')
+        request_object = RequestModel.find_by_requestUUID(requestUUID=request_uuid)
         target_account = request_object.__dict__['account']
 
         profile_object = ProfileModel.find_latest_by_account(account=target_account)

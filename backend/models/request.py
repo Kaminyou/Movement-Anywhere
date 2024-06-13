@@ -9,7 +9,7 @@ class RequestModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     account = db.Column(db.ForeignKey('users.account'), nullable=False)
-    submitUUID = db.Column(db.CHAR(36), nullable=False, unique=True)
+    requestUUID = db.Column(db.CHAR(36), nullable=False, unique=True)
 
     # model and data info
     dataType = db.Column(db.String(100), nullable=False)
@@ -35,36 +35,36 @@ class RequestModel(db.Model):
         return cls.query.filter_by(account=account).order_by(RequestModel.date.desc()).all()
 
     @classmethod
-    def find_by_submitID(cls, submitUUID: str) -> 'RequestModel':
-        return cls.query.filter_by(submitUUID=submitUUID).first()
+    def find_by_requestUUID(cls, requestUUID: str) -> 'RequestModel':
+        return cls.query.filter_by(requestUUID=requestUUID).first()
 
     @classmethod
-    def set_status_to_compute(cls, submitUUID: str) -> None:
-        submission = cls.query.filter_by(submitUUID=submitUUID).first()
+    def set_status_to_compute(cls, requestUUID: str) -> None:
+        submission = cls.query.filter_by(requestUUID=requestUUID).first()
         submission.status = Status.COMPUTING
         db.session.commit()
 
     @classmethod
-    def set_status_to_done(cls, submitUUID: str) -> None:
-        submission = cls.query.filter_by(submitUUID=submitUUID).first()
+    def set_status_to_done(cls, requestUUID: str) -> None:
+        submission = cls.query.filter_by(requestUUID=requestUUID).first()
         submission.status = Status.DONE
         db.session.commit()
 
     @classmethod
-    def set_status_to_error(cls, submitUUID: str, error_msg: str = '') -> None:
-        submission = cls.query.filter_by(submitUUID=submitUUID).first()
+    def set_status_to_error(cls, requestUUID: str, error_msg: str = '') -> None:
+        submission = cls.query.filter_by(requestUUID=requestUUID).first()
         submission.status = Status.ERROR
         submission.statusInfo = error_msg
         db.session.commit()
 
     @classmethod
-    def is_download_link_exist(cls, submitUUID: str):
-        submission = cls.query.filter_by(submitUUID=submitUUID).first()
+    def is_download_link_exist(cls, requestUUID: str):
+        submission = cls.query.filter_by(requestUUID=requestUUID).first()
         return submission.download is not None
 
     @classmethod
-    def get_download_link(cls, submitUUID: str):
-        submission = cls.query.filter_by(submitUUID=submitUUID).first()
+    def get_download_link(cls, requestUUID: str):
+        submission = cls.query.filter_by(requestUUID=requestUUID).first()
         return submission.download
 
     def save_to_db(self) -> None:
