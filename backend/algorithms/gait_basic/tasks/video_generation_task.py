@@ -6,7 +6,7 @@ from celery import Celery
 from redis import Redis
 
 from algorithms._runner import Runner
-from algorithms.gait_basic.utils.make_video import new_render
+from algorithms.gait_basic.utils.make_video import render_detectron_2d_with_target_box
 from settings import SYNC_FILE_SERVER_RESULT_PATH
 from utils.synchronizer import DataSynchronizer
 
@@ -66,19 +66,35 @@ class VideoGenerationTaskRunner(Runner):
             f'{self.file_id}.mp4',
         )
 
-        self.input_custom_dataset_path_remote = os.path.join(
+        self.input_detectron_2d_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
             self.submit_uuid,
             'out',
-            f'{self.file_id}-custom-dataset.npz',
+            '2d',
+            f'{self.file_id}.mp4.npz',
         )
-        self.input_custom_dataset_path_local = os.path.join(
+        self.input_detectron_2d_path_local = os.path.join(
             WORKER_WORKING_DIR_PATH,
             self.submit_uuid,
             'out',
-            f'{self.file_id}-custom-dataset.npz',
+            '2d',
+            f'{self.file_id}.mp4.npz',
         )
 
+        self.input_targeted_person_bboxes_path_remote = os.path.join(
+            SYNC_FILE_SERVER_RESULT_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-target_person_bboxes.pickle',
+        )
+
+        self.input_targeted_person_bboxes_path_local = os.path.join(
+            WORKER_WORKING_DIR_PATH,
+            self.submit_uuid,
+            'out',
+            f'{self.file_id}-target_person_bboxes.pickle',
+        )
+        
         self.input_raw_turn_time_prediction_path_remote = os.path.join(
             SYNC_FILE_SERVER_RESULT_PATH,
             self.submit_uuid,
@@ -130,8 +146,12 @@ class VideoGenerationTaskRunner(Runner):
             des=self.input_mp4_path_local,
         )
         self.data_synchronizer.download(
-            src=self.input_custom_dataset_path_remote,
-            des=self.input_custom_dataset_path_local,
+            src=self.input_detectron_2d_path_remote,
+            des=self.input_detectron_2d_path_local,
+        )
+        self.data_synchronizer.download(
+            src=self.input_targeted_person_bboxes_path_remote,
+            des=self.input_targeted_person_bboxes_path_local,
         )
         self.data_synchronizer.download(
             src=self.input_raw_turn_time_prediction_path_remote,
@@ -150,22 +170,22 @@ class VideoGenerationTaskRunner(Runner):
         )
 
     def execute(self):
-        new_render(
+        render_detectron_2d_with_target_box(
             video_path=self.input_mp4_path_local,
-            detectron_custom_dataset_path=self.input_custom_dataset_path_local,
+            detectron_2d_path=self.input_detectron_2d_path_local,
+            targeted_person_bboxes_path=self.input_targeted_person_bboxes_path_local,
             tt_pickle_path=self.input_raw_turn_time_prediction_path_local,
             output_video_path=self.output_shown_mp4_path_temp_local,
-            draw_keypoint=True,
         )
         # browser mp4v encoding issue -> convert to h264
         os.system(f'ffmpeg -y -i {self.output_shown_mp4_path_temp_local} -movflags +faststart -vcodec libx264 -f mp4 {self.output_shown_mp4_path_local}')  # noqa
 
-        new_render(
+        render_detectron_2d_with_target_box(
             video_path=self.input_mp4_path_local,
-            detectron_custom_dataset_path=self.input_custom_dataset_path_local,
+            detectron_2d_path=self.input_detectron_2d_path_local,
+            targeted_person_bboxes_path=self.input_targeted_person_bboxes_path_local,
             tt_pickle_path=self.input_raw_turn_time_prediction_path_local,
             output_video_path=self.output_shown_black_background_mp4_path_temp_local,
-            draw_keypoint=True,
             draw_background=False,
         )
         os.system(f'ffmpeg -y -i {self.output_shown_black_background_mp4_path_temp_local} -movflags +faststart -vcodec libx264 -f mp4 {self.output_shown_black_background_mp4_path_local}')  # noqa
