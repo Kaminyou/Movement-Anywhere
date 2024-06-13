@@ -1,13 +1,14 @@
 import torch
 import numpy as np
 
+
 def eval_one_instance(gait_instance, model, device='cpu', return_prob=False):
     model.eval()
     with torch.no_grad():
         signals = []
         for signal in gait_instance.generate_all_signal_segments_without_answer():
             signals.append(signal)
-    
+
         signals = torch.FloatTensor(np.array(signals)).to(device)
         logits = model(signals)
         preds = torch.argmax(logits, dim=1).cpu().numpy()
@@ -27,7 +28,7 @@ def evaluate(epoch, eval_dataset, model, device, prefix='', writer=None, return_
             predss.append(preds)
             probss.append(probs)
         return predss, probss
-    
+
     else:
         predss = []
         for instance in eval_dataset:
