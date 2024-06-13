@@ -1,4 +1,10 @@
 # Changelog
+## v0.8.7
+### Improvements
+- Upgrade test env
+- Add unit tests
+
+
 ## v0.8.6
 ### Improvements
 - Improve 2d alg visualization (remove uncertain keypoints/ add target box)
