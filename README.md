@@ -9,7 +9,7 @@
 ## Deployment
 ### Get started
 1. Please execute `setup.sh` to download pretrained weights for several deep learning models. It will also check if all required docker images exist or not.
-    ```
+    ```bash
     $ ./setup.sh
     ```
 2. Please modify `database/sql/create_user.sql` first to create accounts for default admin users.
@@ -102,6 +102,22 @@ MAPPING = {
 
 ```
 7. Finish. If you need to modify the input interface or anything else, please directly modify those files.
+
+## Active learning
+To find out what are a better subset for turn time labeling among collected dataset, please follow the steps:
+1. Please setup test environment as mentioned in `Unit test and integration test` section
+2. Please execute
+    ```bash
+    $ docker exec -it gait-anywhere-test_env bash
+    # in the container
+    $ python3 tools/find_hard_examples.py --number 10  # will show top 10
+    ```
+3. The output will be like
+    ```
+    Number 1; certainty=0.3101; path=/data/XXX/out/3d/2024-05-04-1-14.mp4.npy
+    Number 2; certainty=0.4529; path=/data/YYY/out/3d/2024-05-04-1-14.mp4.npy
+    Number 3; certainty=0.4738; path=/data/ZZZ/out/3d/2024-05-04-1-14.mp4.npy
+    ```
 
 ## Citation
 ```
