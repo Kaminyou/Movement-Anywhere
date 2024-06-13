@@ -1,4 +1,9 @@
 # Changelog
+## v0.9.1
+### New features
+- Subtask registration
+
+
 ## v0.9.0
 ### New features
 - Add active learning tools
