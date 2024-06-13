@@ -19,7 +19,7 @@ if os.environ.get('CELERY_WORKER', 'none') == 'gait-worker':
     from .tasks.depth_estimation_task import depth_estimation_task
     from .tasks.track_and_extract_task import track_and_extract_task
     from .tasks.turn_time_task import turn_time_task
-    from .tasks.video_generation_task import video_generation_task
+    from .tasks.video_generation_2d_task import video_generation_2d_task
 
 
 class Video2DGaitAnalyzer(Analyzer):
@@ -107,14 +107,14 @@ class Video2DGaitAnalyzer(Analyzer):
         )
 
         # video generation
-        video_generation_config = {
+        video_generation_2d_config = {
             'file_id': file_id,
         }
-        video_generation_task_instance = video_generation_task.delay(
+        video_generation_2d_task_instance = video_generation_2d_task.delay(
             submit_uuid,
-            video_generation_config,
+            video_generation_2d_config,
         )
-        while not depth_estimation_task_instance.ready() or not video_generation_task_instance.ready():  # noqa
+        while not depth_estimation_task_instance.ready() or not video_generation_2d_task_instance.ready():  # noqa
             time.sleep(3)
 
         if depth_estimation_task_instance.failed():
@@ -129,7 +129,7 @@ class Video2DGaitAnalyzer(Analyzer):
             except TimeoutError:
                 print('Timeout!')
 
-        if video_generation_task_instance.failed():
+        if video_generation_2d_task_instance.failed():
             raise RuntimeError('Video Generation Task falied!')
 
         sl = final_output.get('sl', -1)

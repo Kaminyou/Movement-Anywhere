@@ -22,7 +22,7 @@ TASK_SYNC_URL = os.environ.get('TASK_SYNC_URL')
 FOLDER_TO_STORE_TEMP_FILE_PATH = os.environ.get('FOLDER_TO_STORE_TEMP_FILE_PATH')
 DOCKER_NETWORK = os.environ.get('DOCKER_NETWORK', None)
 
-WORKER_WORKING_DIR_PATH = os.path.join('/root/data/', 'video_generation')
+WORKER_WORKING_DIR_PATH = os.path.join('/root/data/', 'video_generation_2d')
 
 BACKEND_FOLDER_PATH = os.environ['BACKEND_FOLDER_PATH']
 WORK_DIR = '/root/backend'
@@ -36,7 +36,7 @@ app = Celery(
 )
 
 
-class VideoGenerationTaskRunner(Runner):
+class VideoGeneration2DTaskRunner(Runner):
     def __init__(
         self,
         submit_uuid: str,
@@ -194,11 +194,11 @@ class VideoGenerationTaskRunner(Runner):
         shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.submit_uuid))
 
 
-@app.task(bind=True, name='video_generation_task', queue='video_generation_task_queue')
-def video_generation_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
+@app.task(bind=True, name='video_generation_2d_task', queue='video_generation_2d_task_queue')
+def video_generation_2d_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
 
     redis = Redis.from_url(TASK_SYNC_URL)
-    key = f'video_generation_task_{submit_uuid}'
+    key = f'video_generation_2d_task_{submit_uuid}'
     if redis.exists(key):
         print(f'Skip this task since {key} exists')
         return True
@@ -211,7 +211,7 @@ def video_generation_task(self, submit_uuid: str, config: t.Dict[str, t.Any]):
         password=SYNC_FILE_SERVER_PASSWORD,
     )
 
-    runner = VideoGenerationTaskRunner(
+    runner = VideoGeneration2DTaskRunner(
         submit_uuid=submit_uuid,
         config=config,
         data_synchronizer=data_synchronizer,
