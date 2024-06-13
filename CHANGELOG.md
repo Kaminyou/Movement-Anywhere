@@ -1,4 +1,9 @@
 # Changelog
+## v0.9.2
+### Improvements
+- Change all `submitUUID` to `requestUUID` to sync the usage
+
+
 ## v0.9.1
 ### New features
 - Subtask registration
