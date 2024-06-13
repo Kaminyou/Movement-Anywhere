@@ -1,4 +1,4 @@
-![version](https://img.shields.io/badge/version-0.2.1-red)
+![version](https://img.shields.io/badge/version-0.8.7-red)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Kaminyou/PathoOpenGait/blob/main/LICENSE)
 ![linting workflow](https://github.com/Kaminyou/Gait-Anywhere/actions/workflows/main.yml/badge.svg)
 # Gait-Anywhere
