@@ -55,13 +55,14 @@ $ docker exec -it gait-anywhere-backend-dev bash
 $ python3 app.py
 ```
 
-### Integration test
+### Unit test and integration test
 Please set up all services according to the previous section, then
 ```bash
 $ ./test_integration_setup.sh  # download test data
 $ docker exec -it gait-anywhere-test_env bash
 # in the container
-$ pytest --integration .
+$ pytest --cov backend/ .  # for unit tests
+$ pytest --integration .  # for integration tests
 ```
 Please note that the test script will not automatically delete anything created during the integration test (so as to enable debugging).
 Before you set up the production services, please double check if you did clean up the database and the folder to store the files (at `SYNC_FILE_SERVER_STORE_PATH` in `.env`)
