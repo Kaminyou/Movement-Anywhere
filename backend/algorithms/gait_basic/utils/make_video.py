@@ -205,3 +205,215 @@ def new_render(
         out.write(frame)
     out.release()
     del out
+
+
+def calculate_iou(
+    bbox1: t.Tuple[int, int, int, int],
+    bbox2: t.Tuple[int, int, int, int],
+) -> float:
+    """
+    Calculate IOU of two bbox; each bbox in a format of (left, top, width, height)
+    """
+    # Unpack the bounding boxes
+    left1, top1, width1, height1 = bbox1
+    left2, top2, width2, height2 = bbox2
+
+    # Calculate the bottom-right corners
+    right1, bottom1 = left1 + width1, top1 + height1
+    right2, bottom2 = left2 + width2, top2 + height2
+
+    # Calculate intersection coordinates
+    inter_left = max(left1, left2)
+    inter_top = max(top1, top2)
+    inter_right = min(right1, right2)
+    inter_bottom = min(bottom1, bottom2)
+
+    # Calculate intersection area
+    inter_width = inter_right - inter_left
+    inter_height = inter_bottom - inter_top
+    if inter_width > 0 and inter_height > 0:  # Check if there is an intersection
+        intersection_area = inter_width * inter_height
+    else:
+        intersection_area = 0
+
+    # Calculate union area
+    union_area = width1 * height1 + width2 * height2 - intersection_area
+
+    # Calculate Intersection over Union (IoU)
+    iou = intersection_area / union_area
+
+    return iou
+
+
+def get_target_boxes_and_keypoints_from_detection_2d(
+    detectron_2d,
+    targeted_person_bboxes,
+):
+
+    bb = detectron_2d['boxes']
+    kp = detectron_2d['keypoints']
+    results_bb = []
+    results_kp = []
+    for i in range(len(bb)):
+        if len(bb[i][1]) == 0 or len(kp[i][1]) == 0:
+            # No bbox/keypoints detected for this frame -> will be interpolated
+            results_bb.append(None)  # 4 bounding box coordinates
+            results_kp.append(None)  # 17 COCO keypoints
+        elif len(targeted_person_bboxes[i]) == 0:
+            results_bb.append(None)  # 4 bounding box coordinates
+            results_kp.append(None)  # 17 COCO keypoints
+        else:
+            max_iou = 0
+            potential_box_idx = None
+            target_box = targeted_person_bboxes[i]
+            for available_box_idx, available_box in enumerate(bb[i][1]):
+                _left, _top, _right, _bottom, _ = available_box
+                _available_bbox = (_left, _top, _right - _left, _bottom - _top)
+                _iou = calculate_iou(target_box, _available_bbox)
+                if _iou > max_iou:
+                    max_iou = _iou
+                    potential_box_idx = available_box_idx
+            if max_iou < 0.5 or potential_box_idx is None:
+                results_bb.append(None)  # 4 bounding box coordinates
+                results_kp.append(None)  # 17 COCO keypoints
+            else:
+                best_match = potential_box_idx
+                best_bb = bb[i][1][best_match, :4]
+                best_kp = kp[i][1][best_match].T.copy()[:, [0, 1, 3]]
+                results_bb.append(best_bb)
+                results_kp.append(best_kp)
+    return results_bb, results_kp
+
+
+def render_detectron_2d_with_target_box(
+    video_path: str,
+    detectron_2d_path: str,
+    targeted_person_bboxes_path: str,
+    tt_pickle_path: str,
+    output_video_path: str,
+    draw_background: bool = True,
+) -> None:
+    with open(targeted_person_bboxes_path, 'rb') as handle:
+        targeted_person_bboxes = pickle.load(handle)
+    detectron_2d = np.load(detectron_2d_path, encoding='latin1', allow_pickle=True)
+
+    _, keypoints = get_target_boxes_and_keypoints_from_detection_2d(
+        detectron_2d=detectron_2d,
+        targeted_person_bboxes=targeted_person_bboxes,
+    )
+
+    with open(tt_pickle_path, 'rb') as handle:
+        raw_tt = pickle.load(handle)
+
+    frames = []
+    for frame in get_frames(video_path):
+        if draw_background:
+            frames.append(frame)
+        else:
+            frames.append(np.zeros_like(frame))
+
+    image_height, image_width, _ = frames[0].shape
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_video_path, fourcc, 30.0, (image_width, image_height))
+
+    n = len(keypoints)
+    for frame_id in range(n):
+        frame = frames[frame_id]
+        color = (0, 0, 255)  # red
+        if not draw_background:
+            color = (255, 255, 255)
+
+        if len(targeted_person_bboxes[frame_id]) == 4:
+            left, top, width, height = targeted_person_bboxes[frame_id]
+            frame = cv2.rectangle(
+                frame, [left, top], [left + width, top + height], (255, 0, 0), 5,
+            )
+
+        if keypoints[frame_id] is not None and keypoints[frame_id][15][2] >= 0.2 and keypoints[frame_id][16][2] >= 0.2:  # noqa
+
+            # for point in keypoints[frame_id]:
+            #     if point[2] >= 0.2:
+            #         cv2.circle(frame, (int(point[0]), int(point[1])), 10, color, -1)
+
+            for (from_idx, to_idx) in gen_pairs([10, 8, 6, 5, 7, 9]):
+                cv2.line(
+                    frame,
+                    tuple(keypoints[frame_id][from_idx][:2].astype(int)),
+                    tuple(keypoints[frame_id][to_idx][:2].astype(int)),
+                    color,
+                    5,
+                )
+
+            for (from_idx, to_idx) in gen_pairs([6, 12, 14, 16]):
+                cv2.line(
+                    frame,
+                    tuple(keypoints[frame_id][from_idx][:2].astype(int)),
+                    tuple(keypoints[frame_id][to_idx][:2].astype(int)),
+                    (255, 0, 255),  # purple; right
+                    5,
+                )
+
+            for (from_idx, to_idx) in gen_pairs([6, 12]):
+                cv2.line(
+                    frame,
+                    tuple(keypoints[frame_id][from_idx][:2].astype(int)),
+                    tuple(keypoints[frame_id][to_idx][:2].astype(int)),
+                    color,
+                    5,
+                )
+
+            for (from_idx, to_idx) in gen_pairs([5, 11]):
+                cv2.line(
+                    frame,
+                    tuple(keypoints[frame_id][from_idx][:2].astype(int)),
+                    tuple(keypoints[frame_id][to_idx][:2].astype(int)),
+                    color,
+                    5,
+                )
+
+            for (from_idx, to_idx) in gen_pairs([11, 13, 15]):
+                cv2.line(
+                    frame,
+                    tuple(keypoints[frame_id][from_idx][:2].astype(int)),
+                    tuple(keypoints[frame_id][to_idx][:2].astype(int)),
+                    (255, 255, 0),  # light blue; left
+                    5,
+                )
+
+            for (from_idx, to_idx) in gen_pairs([12, 11]):
+                cv2.line(
+                    frame,
+                    tuple(keypoints[frame_id][from_idx][:2].astype(int)),
+                    tuple(keypoints[frame_id][to_idx][:2].astype(int)),
+                    color,
+                    5,
+                )
+
+        current_frame_type = 'walking'
+        if raw_tt[frame_id] == 1:
+            current_frame_type = 'turning'
+
+        # add white text on a red rectangle
+        text = current_frame_type
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 2
+        font_thickness = 3
+        text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+        text_width, text_height = text_size
+        margin = 5
+        lower_left_corner = (100, 200 - text_height - margin)
+        upper_right_corner = (100 + text_width + margin, 200 + margin)
+        cv2.rectangle(frame, lower_left_corner, upper_right_corner, (0, 0, 255), cv2.FILLED)
+        cv2.putText(
+            frame,
+            text,
+            (100, 200),
+            font,
+            font_scale,
+            (255, 255, 255),
+            font_thickness,
+            cv2.LINE_AA,
+        )
+        out.write(frame)
+    out.release()
+    del out
