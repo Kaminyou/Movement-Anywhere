@@ -50,7 +50,7 @@ class Video2DGaitAnalyzer(Analyzer):
 
         def on_msg(*args, **kwargs):
             print(f'on_msg: {args}, {kwargs}')
-        
+
         engine = create_engine(
             os.getenv('SQLALCHEMY_DATABASE_URI'),
             pool_pre_ping=True,
