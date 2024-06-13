@@ -15,7 +15,6 @@ class SignalNet(nn.Module):  # [51, 129] -> [N]
 
             nn.Conv1d(128, 256, kernel_size=3, stride=1, padding=1),
             nn.MaxPool1d(2),
-
         )
 
         self.linear = nn.Sequential(

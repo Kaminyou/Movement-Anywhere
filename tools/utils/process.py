@@ -19,7 +19,7 @@ def eval_one_instance(gait_instance, model, device='cpu', return_prob=False):
     return preds, probs
 
 
-def evaluate(epoch, eval_dataset, model, device, prefix='', writer=None, return_prob=False):
+def evaluate(eval_dataset, model, device, return_prob=False):
     if return_prob:
         predss = []
         probss = []

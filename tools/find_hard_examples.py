@@ -48,7 +48,6 @@ def main():
         eval_dataset.append(instance)
 
     _, probss = evaluate(
-        epoch=0,
         eval_dataset=eval_dataset,
         model=model,
         device='cpu',
