@@ -11,3 +11,19 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.black-frame {
+  border: 2px solid black; /* Adds a black border */
+}
+
+.space-small {
+  margin-bottom: 10px;
+}
+
+.space-medium {
+  margin-bottom: 20px;
+}
+
+.space-large {
+  margin-bottom: 30px;
+}
