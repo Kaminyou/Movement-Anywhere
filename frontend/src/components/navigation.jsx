@@ -59,7 +59,7 @@ const versionStyle = {
           </button>
           <div style={navbarBrandStyle}>
             <HashLink className="navbar-brand page-scroll" smooth to="/#header">Gait Anywhere</HashLink>
-            <span style={versionStyle}>v0.9.0</span>
+            <span style={versionStyle}>v0.9.3</span>
         </div>
           {/* <HashLink className="navbar-brand page-scroll" smooth to="/#header">PathoOpenGait</HashLink> */}
           {/* <a className="navbar-brand page-scroll" href="#page-top">
@@ -84,6 +84,9 @@ const versionStyle = {
                 Contact
               </HashLink>
             </li>
+            <li className="nav-item">
+              <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+            </li>
             </ul>
           ):(
               {
@@ -100,6 +103,9 @@ const versionStyle = {
                       Contact
                     </HashLink>
                   </li>
+                  <li className="nav-item">
+                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+                  </li>
                   </ul>
                 ),
                 'admin': (
@@ -114,6 +120,9 @@ const versionStyle = {
                     <HashLink smooth to="/#contact" className="page-scroll">
                       Contact
                     </HashLink>
+                  </li>
+                  <li className="nav-item">
+                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 ),
@@ -136,6 +145,9 @@ const versionStyle = {
                       Contact
                     </HashLink>
                   </li>
+                  <li className="nav-item">
+                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+                  </li>
                   </ul>
                 ),
                 'researcher': (
@@ -153,6 +165,9 @@ const versionStyle = {
                     <HashLink smooth to="/#contact" className="page-scroll">
                       Contact
                     </HashLink>
+                  </li>
+                  <li className="nav-item">
+                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 ),
@@ -174,6 +189,9 @@ const versionStyle = {
                     <HashLink smooth to="/#contact" className="page-scroll">
                       Contact
                     </HashLink>
+                  </li>
+                  <li className="nav-item">
+                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 )
