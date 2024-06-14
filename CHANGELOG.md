@@ -1,4 +1,9 @@
 # Changelog
+## v0.9.3
+### New features
+- Add the source code link (GitHub link) in frontend pages
+- Improve the demo page
+
 ## v0.9.2
 ### Improvements
 - Change all `submitUUID` to `requestUUID` to sync the usage
