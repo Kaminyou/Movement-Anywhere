@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 import time
@@ -72,6 +73,9 @@ class SVOGaitAnalyzer(Analyzer):
 
         # meta output (for non-target person removing)
         meta_targeted_person_bboxes_path = os.path.join(data_root_dir, 'out', f'{file_id}-target_person_bboxes.pickle')  # noqa
+
+        # final result
+        final_result_json_path = os.path.join(data_root_dir, 'out', 'final_result.json')
 
         if not add_newline_if_missing(source_txt_path):
             print('add a new line to txt')
@@ -259,7 +263,7 @@ class SVOGaitAnalyzer(Analyzer):
         if video_generation_3d_task_instance.failed():
             raise RuntimeError('Video Generation 3D Task falied!')
 
-        return [
+        final_result = [
             {
                 'key': 'stride length',
                 'value': sl / 10,
@@ -297,3 +301,8 @@ class SVOGaitAnalyzer(Analyzer):
                 'type': 'float',
             },
         ]
+
+        with open(final_result_json_path, 'w') as f:
+            json.dump(final_result, f, indent=4) 
+
+        return final_result

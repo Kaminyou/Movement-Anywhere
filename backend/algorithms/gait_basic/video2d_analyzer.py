@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import time
@@ -62,6 +63,9 @@ class Video2DGaitAnalyzer(Analyzer):
         os.makedirs(os.path.join(data_root_dir, 'out', '2d'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'out', '3d'), exist_ok=True)
         os.makedirs(os.path.join(data_root_dir, 'video'), exist_ok=True)
+
+        # final result
+        final_result_json_path = os.path.join(data_root_dir, 'out', 'final_result.json')
 
         # algorithm
         # tracking
@@ -175,7 +179,7 @@ class Video2DGaitAnalyzer(Analyzer):
         velocity = final_output.get('v', -1)
         cadence = final_output.get('c', -1)
 
-        return [
+        final_result = [
             {
                 'key': 'stride length',
                 'value': sl,
@@ -213,3 +217,8 @@ class Video2DGaitAnalyzer(Analyzer):
                 'type': 'float',
             },
         ]
+
+        with open(final_result_json_path, 'w') as f:
+            json.dump(final_result, f, indent=4) 
+
+        return final_result

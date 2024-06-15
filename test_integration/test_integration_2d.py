@@ -73,7 +73,7 @@ def test_integration_2d_file_submission(submit_data):
         pytest.fail(f'Task did not complete in expected time ({MAX_WAITING_TIME}) s')
 
     # Check output files
-    for file_name in ['render-black-background.mp4', 'render.mp4', '2024-05-04-1-14-tt.pickle']:
+    for file_name in ['render-black-background.mp4', 'render.mp4', '2024-05-04-1-14-tt.pickle', 'final_result.json']:
         assert os.path.exists(os.path.join('/data', request_uuid, 'out', file_name))
 
     # Check output values
