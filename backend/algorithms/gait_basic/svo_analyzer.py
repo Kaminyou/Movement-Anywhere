@@ -303,6 +303,6 @@ class SVOGaitAnalyzer(Analyzer):
         ]
 
         with open(final_result_json_path, 'w') as f:
-            json.dump(final_result, f, indent=4) 
+            json.dump(final_result, f, indent=4)
 
         return final_result
