@@ -326,7 +326,7 @@ def render_detectron_2d_with_target_box(
         if len(targeted_person_bboxes[frame_id]) == 4:
             left, top, width, height = targeted_person_bboxes[frame_id]
             frame = cv2.rectangle(
-                frame, [left, top], [left + width, top + height], (255, 0, 0), 5,
+                frame, [left, top], [left + width, top + height], (0, 255, 255), 10,  # yellow
             )
 
         if keypoints[frame_id] is not None and keypoints[frame_id][15][2] >= 0.2 and keypoints[frame_id][16][2] >= 0.2:  # noqa
@@ -341,7 +341,7 @@ def render_detectron_2d_with_target_box(
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
                     color,
-                    5,
+                    10,
                 )
 
             for (from_idx, to_idx) in gen_pairs([6, 12, 14, 16]):
@@ -350,7 +350,7 @@ def render_detectron_2d_with_target_box(
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
                     (255, 0, 255),  # purple; right
-                    5,
+                    10,
                 )
 
             for (from_idx, to_idx) in gen_pairs([6, 12]):
@@ -359,7 +359,7 @@ def render_detectron_2d_with_target_box(
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
                     color,
-                    5,
+                    10,
                 )
 
             for (from_idx, to_idx) in gen_pairs([5, 11]):
@@ -368,7 +368,7 @@ def render_detectron_2d_with_target_box(
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
                     color,
-                    5,
+                    10,
                 )
 
             for (from_idx, to_idx) in gen_pairs([11, 13, 15]):
@@ -377,7 +377,7 @@ def render_detectron_2d_with_target_box(
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
                     (255, 255, 0),  # light blue; left
-                    5,
+                    10,
                 )
 
             for (from_idx, to_idx) in gen_pairs([12, 11]):
@@ -386,7 +386,7 @@ def render_detectron_2d_with_target_box(
                     tuple(keypoints[frame_id][from_idx][:2].astype(int)),
                     tuple(keypoints[frame_id][to_idx][:2].astype(int)),
                     color,
-                    5,
+                    10,
                 )
 
         current_frame_type = 'walking'
