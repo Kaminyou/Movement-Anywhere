@@ -119,6 +119,9 @@ To find out what are a better subset for turn time labeling among collected data
     Number 3; certainty=0.4738; path=/data/ZZZ/out/3d/2024-05-04-1-14.mp4.npy
     ```
 
+## Known issues
+If a large mp4 video is uploading (e.g., 100MB with 5000 frames), a large RAM is needed to process the video (~35 GB).
+
 ## Citation
 ```
 @article{ho2024pathological,
