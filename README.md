@@ -3,9 +3,6 @@
 ![linting workflow](https://github.com/Kaminyou/Gait-Anywhere/actions/workflows/main.yml/badge.svg)
 # Gait-Anywhere
 
-## System design (Microservice architecture)
-![image](./misc/pathoopengait-system.png)
-
 ## Deployment
 ### Get started
 1. Please execute `setup.sh` to download pretrained weights for several deep learning models. It will also check if all required docker images exist or not.
