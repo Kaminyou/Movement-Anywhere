@@ -144,7 +144,7 @@ MAPPING = {
 7. Finish. If you need to modify the input interface or anything else, please directly modify those files.
 
 ## Important notes
-Two essential docker images will be public available after publication
+Two essential docker images will be public available upon publication
 
 ## Known issues
 If a large mp4 video is uploading (e.g., 100MB with 5000 frames), a large RAM is needed to process the video (~35 GB).
