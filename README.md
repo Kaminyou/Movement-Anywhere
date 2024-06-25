@@ -143,18 +143,11 @@ MAPPING = {
 ```
 7. Finish. If you need to modify the input interface or anything else, please directly modify those files.
 
+## Important notes
+Two essential docker images will be public available after publication
+
 ## Known issues
 If a large mp4 video is uploading (e.g., 100MB with 5000 frames), a large RAM is needed to process the video (~35 GB).
 
 ## Citation
-```
-@article{ho2024pathological,
-  title={Pathological Gait Analysis With an Open-Source Cloud-Enabled Platform Empowered by Semi-Supervised Learning-PathoOpenGait},
-  author={Ho, Ming-Yang and Kuo, Ming-Che and Chen, Ciao-Sin and Wu, Ruey-Meei and Chuang, Ching-Chi and Shih, Chi-Sheng and Tseng, Yufeng Jane},
-  journal={IEEE journal of biomedical and health informatics},
-  volume={28},
-  number={2},
-  pages={1066--1077},
-  year={2024}
-}
-```
+Pending
