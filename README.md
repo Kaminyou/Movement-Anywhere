@@ -4,7 +4,7 @@
 # Gait-Anywhere
 
 ## Deployment
-### Get started
+### Get started (master nodes)
 1. Please execute `setup.sh` to download pretrained weights for several deep learning models. It will also check if all required docker images exist or not.
     ```bash
     $ ./setup.sh
@@ -27,9 +27,52 @@
     ./backend/algorithms/gait_basic/gait_study_semi_turn_time/weights/semi_vanilla_v2/gait-turn-time.pth
     ./backend/algorithms/gait_basic/depth_alg/weights/gait-depth-weight.pth
     ```
-5. Execute
+5. (Optional) Remove workers that you don't want them to run on the master node
+6. Execute
     ```bash
     $ docker-compose up --build -d
+    ```
+
+### Workers on client nodes
+Configuration workers on client nodes is easy, please create a `docker-compose-SUFFIX.yml` file and add each worker's information
+```yml
+# copy x-common-variables: &common-variables block
+# copy x-dind-worker-settings: &common-dind-worker-settings block
+XXX-workerN:
+    <<: *common-dind-worker-settings
+    container_name: gait-anywhere-XXX-workerN
+    environment:
+      <<: *common-variables
+      CELERY_WORKER: 'gait-worker'
+      CUDA_DEVICE_ORDER: 'PCI_BUS_ID'
+      CUDA_VISIBLE_DEVICES: '0'  # change if needed
+    command: celery --app algorithms.gait_basic.tasks.XXX_task worker -Q XXX_task_queue -n XXX-workerN@%h -c 1 --max-tasks-per-child=1 --without-heartbeat --loglevel=info --logfile=inference/logs/XXX-workerN.log
+```
+Then execute
+```bash
+$ docker-compose up --build -d
+```
+
+### Deploy with Kubernetes
+Converting the docker compose YMAL to Kubernetes config is achievable by [kompose](https://kompose.io/)
+```bash
+$ kompose convert -f compose.yaml
+```
+
+## Active learning
+To find out what are a better subset for turn time labeling among collected dataset, please follow the steps:
+1. Please setup test environment as mentioned in `Unit test and integration test` section
+2. Please execute
+    ```bash
+    $ docker exec -it gait-anywhere-test_env bash
+    # in the container
+    $ python3 tools/find_hard_examples.py --number 10  # will show top 10
+    ```
+3. The output will be like
+    ```
+    Number 1; certainty=0.3101; path=/data/XXX/out/3d/2024-05-04-1-14.mp4.npy
+    Number 2; certainty=0.4529; path=/data/YYY/out/3d/2024-05-04-1-14.mp4.npy
+    Number 3; certainty=0.4738; path=/data/ZZZ/out/3d/2024-05-04-1-14.mp4.npy
     ```
 
 ## Development Guide
@@ -99,22 +142,6 @@ MAPPING = {
 
 ```
 7. Finish. If you need to modify the input interface or anything else, please directly modify those files.
-
-## Active learning
-To find out what are a better subset for turn time labeling among collected dataset, please follow the steps:
-1. Please setup test environment as mentioned in `Unit test and integration test` section
-2. Please execute
-    ```bash
-    $ docker exec -it gait-anywhere-test_env bash
-    # in the container
-    $ python3 tools/find_hard_examples.py --number 10  # will show top 10
-    ```
-3. The output will be like
-    ```
-    Number 1; certainty=0.3101; path=/data/XXX/out/3d/2024-05-04-1-14.mp4.npy
-    Number 2; certainty=0.4529; path=/data/YYY/out/3d/2024-05-04-1-14.mp4.npy
-    Number 3; certainty=0.4738; path=/data/ZZZ/out/3d/2024-05-04-1-14.mp4.npy
-    ```
 
 ## Known issues
 If a large mp4 video is uploading (e.g., 100MB with 5000 frames), a large RAM is needed to process the video (~35 GB).
