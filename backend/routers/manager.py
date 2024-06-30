@@ -411,7 +411,7 @@ def manager_request_report_download():
         subordinate_instances = SubordinateModel.find_by_account(account=account)
 
         csv = ''
-        csv += 'account,name,gender,birthday,diagnose,stage,dominant_side,LDED,experiment_date,trial_ID,description,stride_length,stride_width,stride_time,velocity,cadence,turn_time\n'  # noqa
+        csv += 'account,name,gender,birthday,diagnose,stage,dominant_side,LDED,experiment_date,trial_ID,description,requestUUID,stride_length,stride_width,stride_time,velocity,cadence,turn_time\n'  # noqa
         for subordinate_instance in subordinate_instances:
             if subordinate_instance.__dict__['exist']:
                 target_account = subordinate_instance.__dict__['subordinate']
@@ -446,7 +446,8 @@ def manager_request_report_download():
                 for request_object in request_objects:
                     sss = ss + f'{request_object.__dict__["date"].strftime("%Y-%m-%d")},'
                     sss += f'{request_object.__dict__["trialID"]},'
-                    sss += f'{request_object.__dict__["description"]}'
+                    sss += f'{request_object.__dict__["description"]},'
+                    sss += f'{request_object.__dict__["requestUUID"]}'
                     result_objects = ResultModel.find_by_requestUUID(
                         requestUUID=request_object.__dict__["requestUUID"],
                     )
