@@ -5,6 +5,10 @@
 A distributed 2D video-based gait analysis platform
 
 ## Deployment
+### Prerequisite
+Please make sure you have `docker` and `docker-compose` installed. For k8s deployment, please make sure you have `kubectl`.
+
+
 ### Master node
 1. Please execute `setup.sh` to download pretrained weights for several deep learning models. It will also check if all required docker images exist or not.
     ```bash
