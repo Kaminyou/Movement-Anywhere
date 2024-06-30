@@ -107,26 +107,30 @@ $ pytest --integration .  # for integration tests
 Please note that the test script will not automatically delete anything created during the integration test (so as to enable debugging).
 Before you set up the production services, please double check if you did clean up the database and the folder to store the files (at `SYNC_FILE_SERVER_STORE_PATH` in `.env`)
 
-### Customized
+### Customization
 #### Add new algorithms (models) or new data type
 1. Please create a folder: `backend/algorithms/<YOUR_ALGORITHM_NAME>`.
-2. Your folder should have a `__init__.py` and `main` files.
-3. In `main.py`, add `from .._analyzer import Analyzer`.
+2. Your folder should have a `__init__.py`.
+3. In your analyzer file, add `from algorithms._analyzer import Analyzer`.
 4. Create a class for your algorithm, which should inherit `Analyzer`.
     ```python
     class CustomizedAnalyzer(Analyzer):
         def __init__(
             self,
-            ...
+            ...,  # some pretrained weights' paths
         ):
             ...
 
         def run(
             self,
-            data_root_dir,
-            file_id,  # '2021-04-01-1-4'
+            request_uuid: str,
+            data_root_dir: str,
+            file_id: str,
+            height: float = None,
+            focal_length: float = None,
+            ...,  # remove or add your args
         ) -> t.List[t.Dict[str, t.Any]]:
-            ...
+            # implementation
     ```
 5. Make sure the return of `run` is in the format of `t.List[t.Dict[str, t.Any]]`.
 6. Modify `MAPPING` in `backend/inference/config.py`. For example,
@@ -142,9 +146,47 @@ MAPPING = {
 
 ```
 7. Finish. If you need to modify the input interface or anything else, please directly modify those files.
+#### Implement your algorithms with Runner
+Each analyzer should be executed by calling a pipeline (DAG) of subtask. Each subtask should be implemented as a Runner.
+1. Please create a folder: `backend/algorithms/<YOUR_ALGORITHM_NAME>/tasks`. 
+2. Add your subtask file, and import the Runner abstract `from algorithms._runner import Runner`
+3. Your subtask runner should inherit `Runner`.
+    ```python
+    class CustomizedTaskRunner(Runner):
+        def __init__(
+            self,
+            request_uuid: str,
+            config: t.Dict[str, t.Any],
+            data_synchronizer: DataSynchronizer,
+            celery_task_id: str,
+            update_state: t.Callable,
+            result_hook: t.Optional[t.Dict] = None,
+        ):
+            self.request_uuid = request_uuid
+            self.config = config
+            self.file_id = self.config['file_id']
+            self.data_synchronizer = data_synchronizer
+            self.celery_task_id = celery_task_id
+            self.update_state = update_state
+            self.result_hook = result_hook
+
+            # define your I/O here
+
+        def fetch_data(self):
+            # implementation
+
+        def upload_data(self):
+            # implementation
+
+        def execute(self):
+            # implementation
+
+        def clear(self):
+            shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.request_uuid))
+    ```
 
 ## Important notes
-Two essential docker images will be public available upon publication
+Two essential docker images will be public available upon publication.
 
 ## Known issues
 If a large mp4 video is uploading (e.g., 100MB with 5000 frames), a large RAM is needed to process the video (~35 GB).
