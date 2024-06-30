@@ -5,7 +5,7 @@
 A distributed 2D video-based gait analysis platform
 
 ## Deployment
-### Get started (master nodes)
+### Master node
 1. Please execute `setup.sh` to download pretrained weights for several deep learning models. It will also check if all required docker images exist or not.
     ```bash
     $ ./setup.sh
@@ -34,7 +34,7 @@ A distributed 2D video-based gait analysis platform
     $ docker-compose up --build -d
     ```
 
-### Workers on client nodes
+### Client nodes (workers)
 Configuration workers on client nodes is easy, please create a `docker-compose-SUFFIX.yml` file and add each worker's information
 ```yml
 # copy x-common-variables: &common-variables block
