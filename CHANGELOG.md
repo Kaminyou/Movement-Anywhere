@@ -1,4 +1,9 @@
 # Changelog
+## v0.9.6
+### Improvements
+- Add `requestUUID` to report
+
+
 ## v0.9.5
 ### Improvements
 - Make the line clear in visualization (2D alg)
