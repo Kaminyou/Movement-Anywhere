@@ -2,6 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Kaminyou/Gait-Anywhere/blob/main/LICENSE)
 ![linting workflow](https://github.com/Kaminyou/Gait-Anywhere/actions/workflows/main.yml/badge.svg)
 # Gait-Anywhere
+A distributed 2D video-based gait analysis platform
 
 ## Deployment
 ### Get started (master nodes)
