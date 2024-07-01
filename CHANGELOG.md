@@ -1,4 +1,9 @@
 # Changelog
+## v0.9.7
+### Improvements
+- Change the uncertainty representation of `tools/find_hard_examples.py`
+
+
 ## v0.9.6
 ### Improvements
 - Add `requestUUID` to report
