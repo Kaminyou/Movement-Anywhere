@@ -75,9 +75,9 @@ To find out what are a better subset for turn time labeling among collected data
     ```
 3. The output will be like
     ```
-    Number 1; certainty=0.3101; path=/data/XXX/out/3d/2024-05-04-1-14.mp4.npy
-    Number 2; certainty=0.4529; path=/data/YYY/out/3d/2024-05-04-1-14.mp4.npy
-    Number 3; certainty=0.4738; path=/data/ZZZ/out/3d/2024-05-04-1-14.mp4.npy
+    Number 1; uncertainty=0.6899; path=/data/XXX/out/3d/XXX.mp4.npy
+    Number 2; uncertainty=0.5471; path=/data/YYY/out/3d/YYY.mp4.npy
+    Number 3; uncertainty=0.5262; path=/data/ZZZ/out/3d/ZZZ.mp4.npy
     ```
 
 ## Development Guide

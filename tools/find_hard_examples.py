@@ -69,7 +69,7 @@ def main():
 
     count = 0
     for idx in sorted_idx:
-        print(f'Number {idx + 1}; certainty={diff_means[idx]:.4f}; path={paths_to_npz[idx]}')
+        print(f'Number {idx + 1}; uncertainty={(1 - diff_means[idx]):.4f}; path={paths_to_npz[idx]}')  # noqa
         count += 1
         if args.number != -1 and count >= args.number:
             break
