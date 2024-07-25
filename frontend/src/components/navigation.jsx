@@ -58,7 +58,7 @@ const versionStyle = {
             <span className="icon-bar"></span>{" "}
           </button>
           <div style={navbarBrandStyle}>
-            <HashLink className="navbar-brand page-scroll" smooth to="/#header">Gait Anywhere</HashLink>
+            <HashLink className="navbar-brand page-scroll" smooth to="/#header">Movement Anywhere</HashLink>
             <span style={versionStyle}>v0.9.7</span>
         </div>
           {/* <HashLink className="navbar-brand page-scroll" smooth to="/#header">PathoOpenGait</HashLink> */}
@@ -85,7 +85,7 @@ const versionStyle = {
               </HashLink>
             </li>
             <li className="nav-item">
-              <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+              <a href="https://github.com/Kaminyou/Movement-Anywhere">GitHub</a>
             </li>
             </ul>
           ):(
@@ -104,7 +104,7 @@ const versionStyle = {
                     </HashLink>
                   </li>
                   <li className="nav-item">
-                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+                    <a href="https://github.com/Kaminyou/Movement-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 ),
@@ -122,7 +122,7 @@ const versionStyle = {
                     </HashLink>
                   </li>
                   <li className="nav-item">
-                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+                    <a href="https://github.com/Kaminyou/Movement-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 ),
@@ -146,7 +146,7 @@ const versionStyle = {
                     </HashLink>
                   </li>
                   <li className="nav-item">
-                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+                    <a href="https://github.com/Kaminyou/Movement-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 ),
@@ -167,7 +167,7 @@ const versionStyle = {
                     </HashLink>
                   </li>
                   <li className="nav-item">
-                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+                    <a href="https://github.com/Kaminyou/Movement-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 ),
@@ -191,7 +191,7 @@ const versionStyle = {
                     </HashLink>
                   </li>
                   <li className="nav-item">
-                    <a href="https://github.com/Kaminyou/Gait-Anywhere">GitHub</a>
+                    <a href="https://github.com/Kaminyou/Movement-Anywhere">GitHub</a>
                   </li>
                   </ul>
                 )
