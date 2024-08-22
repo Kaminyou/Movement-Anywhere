@@ -224,10 +224,11 @@ def request_result():
         for result_object in result_objects:
             k = result_object.__dict__['resultKey']
             v = result_object.__dict__['resultValue']
+            u = result_object.__dict__['resultUnit']
             v_type = result_object.__dict__['resultType']
             if v_type == 'float':
                 v = round(float(v), 2)
-            sub_results[k] = v
+            sub_results[k] = f'{v} ({u})'
 
         return (
             {
