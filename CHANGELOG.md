@@ -1,4 +1,12 @@
 # Changelog
+## v0.9.8
+### Improvements
+- Add unit in result api call
+- Add more workers
+
+### Fix bugs
+- Fix the wrong focal length api call in the upload page
+
 ## v0.9.7
 ### Improvements
 - Change the uncertainty representation of `tools/find_hard_examples.py`

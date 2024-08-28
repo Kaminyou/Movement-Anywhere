@@ -1,4 +1,4 @@
-![version](https://img.shields.io/badge/version-0.9.6-red)
+![version](https://img.shields.io/badge/version-0.9.8-red)
 [![License: AGPL](https://img.shields.io/badge/License-AGPL-yellow.svg)](https://github.com/Kaminyou/Movement-Anywhere/blob/main/LICENSE)
 ![linting workflow](https://github.com/Kaminyou/Movement-Anywhere/actions/workflows/main.yml/badge.svg)
 # Movement-Anywhere
