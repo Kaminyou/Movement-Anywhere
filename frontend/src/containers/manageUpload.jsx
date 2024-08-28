@@ -104,7 +104,7 @@ function ManageUploadPage({ token }) {
 
   const fetchFocalLength = async () => {
     try {
-      const response = await axios.get("/api/info/focallength", {
+      const response = await axios.get("/api/info/default/focallength", {
         params: { modelname: modelName }, headers: { Authorization: 'Bearer ' + token }
       });
       setFocalLength(response.data.focalLength)  
