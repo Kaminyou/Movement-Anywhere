@@ -1,8 +1,8 @@
 ![version](https://img.shields.io/badge/version-0.9.8-red)
 [![License: AGPL](https://img.shields.io/badge/License-AGPL-yellow.svg)](https://github.com/Kaminyou/Movement-Anywhere/blob/main/LICENSE)
 ![linting workflow](https://github.com/Kaminyou/Movement-Anywhere/actions/workflows/main.yml/badge.svg)
-# Movement-Anywhere
-A distributed 2D video-based movement analysis platform
+# Movement Anywhere
+An Open-Source Distributed 2D Video-Based Movement Analysis Platform Empowered by Active Learning 
 
 ## Deployment
 ### Prerequisite
