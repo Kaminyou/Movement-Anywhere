@@ -6,7 +6,8 @@ An Open-Source Distributed 2D Video-Based Movement Analysis Platform Empowered b
 
 ## Deployment
 ### Prerequisite
-Please make sure you have `docker` and `docker-compose` installed. For k8s deployment, please make sure you have `kubectl`.
+- Please make sure you have `docker` and `docker-compose` installed. For k8s deployment, please make sure you have `kubectl`.
+- Please first build essential images provided in this [repo](https://github.com/Kaminyou/zed-gait-preprocessing) via `./build.sh`.
 
 
 ### Master node
@@ -189,9 +190,6 @@ Each analyzer should be executed by calling a pipeline (DAG) of subtask. Each su
         def clear(self):
             shutil.rmtree(os.path.join(WORKER_WORKING_DIR_PATH, self.request_uuid))
     ```
-
-## Important notes
-Two essential docker images will be public available upon publication.
 
 ## Known issues
 If a large mp4 video is uploading (e.g., 100MB with 5000 frames), a large RAM is needed to process the video (~35 GB).
