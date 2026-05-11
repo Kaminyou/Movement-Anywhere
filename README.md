@@ -197,4 +197,12 @@ Two essential docker images will be public available upon publication.
 If a large mp4 video is uploading (e.g., 100MB with 5000 frames), a large RAM is needed to process the video (~35 GB).
 
 ## Citation
-Pending
+```
+@article{ho2026movement,
+  title={Movement Anywhere: An Open-Source Distributed 2D Video-Based Movement Analysis Platform Empowered by Active Learning},
+  author={Ho, Ming-Yang and Tseng, Yufeng Jane},
+  journal={IEEE Journal of Biomedical and Health Informatics},
+  year={2026},
+  publisher={IEEE}
+}
+```
