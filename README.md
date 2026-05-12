@@ -1,8 +1,21 @@
 ![version](https://img.shields.io/badge/version-0.9.8-red)
 [![License: AGPL](https://img.shields.io/badge/License-AGPL-yellow.svg)](https://github.com/Kaminyou/Movement-Anywhere/blob/main/LICENSE)
 ![linting workflow](https://github.com/Kaminyou/Movement-Anywhere/actions/workflows/main.yml/badge.svg)
-# Movement Anywhere
-An Open-Source Distributed 2D Video-Based Movement Analysis Platform Empowered by Active Learning 
+
+<div align="center">
+
+<h2>IEEE JBHI 2026</h2>
+<h1>Movement Anywhere</h1>
+
+[Ming-Yang Ho](https://kaminyou.com/), &nbsp; [Yufeng Jane Tseng](https://www.csie.ntu.edu.tw/en/member/Faculty/Yufeng-Jane-Tseng-95281407)
+
+Department of Computer Science and Information Engineering, National Taiwan University<br>
+
+[[`Paper (official)`](https://ieeexplore.ieee.org/document/11508122)]
+<br><br><image src="./assets/framework.jpg"/>
+<br><image src="./assets/system.jpg"/>
+
+</div>
 
 ## Deployment
 ### Prerequisite
